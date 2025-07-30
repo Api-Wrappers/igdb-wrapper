@@ -1,8 +1,17 @@
 {
 	"name": "@tdanks2000/igdb-wrapper",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"description": "A powerful and easy-to-use TypeScript wrapper for The Internet Games Database (IGDB) API",
-	"module": "src/index.ts",
+	"module": "./dist/index.mjs",
+	"main": "./dist/index.cjs",
+	"types": "./dist/index.d.mts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.mts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.cjs"
+		}
+	},
 	"type": "module",
 	"publishConfig": {
 		"access": "public"
@@ -14,12 +23,21 @@
 	"keywords": [
 		"igdb",
 		"wrapper",
-		"api"
+		"api",
+		"games",
+		"gaming",
+		"video games",
+		"game",
+		"game api",
+		"game api wrapper",
+		"game api wrapper typescript"
 	],
-	"author": "tdanks2000",
+	"author": "TDanks2000",
 	"license": "MIT",
+	"private": false,
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"tsdown": "^0.13.0"
 	},
 	"peerDependencies": {
 		"typescript": "^5"

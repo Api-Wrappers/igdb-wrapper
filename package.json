@@ -18,8 +18,16 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/tdanks2000/igdb-wrapper.git"
+		"url": "git+https://github.com/Api-Wrappers/igdb-wrapper.git"
 	},
+	"homepage": "https://github.com/Api-Wrappers/igdb-wrapper#readme",
+	"bugs": {
+		"url": "https://github.com/Api-Wrappers/igdb-wrapper/issues"
+	},
+	"files": [
+		"dist/**/*",
+		"README.md"
+	],
 	"keywords": [
 		"igdb",
 		"wrapper",

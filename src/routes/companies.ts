@@ -1,14 +1,15 @@
-import type { Company, IGDBResponse, IGDBRouteRequestOptions } from "@/@types";
-import type { IGDBRequestHandler } from "@/request";
+import type {
+	Company,
+	CompanyQueryBuilder,
+	IGDBResponse,
+	IGDBRouteRequestOptions,
+} from "@/@types";
+import { IGDBQueryFactory } from "@/@types";
 import { IGDBRouteBase } from "./base";
 
 export class IGDBCompaniesRoute extends IGDBRouteBase {
 	protected readonly endpoint = "companies" as const;
 	protected readonly defaultFieldsKey = "companies" as const;
-
-	constructor(requestHandler: IGDBRequestHandler) {
-		super(requestHandler);
-	}
 
 	/**
 	 * Get companies with enhanced type safety
@@ -20,6 +21,13 @@ export class IGDBCompaniesRoute extends IGDBRouteBase {
 	}
 
 	/**
+	 * Create a type-safe query builder for companies
+	 */
+	query(): CompanyQueryBuilder {
+		return IGDBQueryFactory.companies();
+	}
+
+	/**
 	 * Get a single company by ID
 	 */
 	async getCompany(
@@ -27,7 +35,9 @@ export class IGDBCompaniesRoute extends IGDBRouteBase {
 		options: Partial<Omit<IGDBRouteRequestOptions, "where" | "search">> = {},
 	): Promise<Company | null> {
 		const result = await this.getById<Company>(id, options);
-		return Array.isArray(result) && result.length > 0 ? result[0] : null;
+		return Array.isArray(result) && result.length > 0
+			? (result[0] ?? null)
+			: null;
 	}
 
 	/**
@@ -67,7 +77,7 @@ export class IGDBCompaniesRoute extends IGDBRouteBase {
 	 */
 	async getCompaniesByCountry(
 		countryCode: number,
-		options: Partial<Omit<IGDBRouteRequestOptions, "where">> = {},
+		options: Partial<IGDBRouteRequestOptions> = {},
 	): Promise<IGDBResponse<Company[]>> {
 		return this.getCompanies({
 			...options,
@@ -81,7 +91,7 @@ export class IGDBCompaniesRoute extends IGDBRouteBase {
 	 * Get companies that developed games (have developed games)
 	 */
 	async getDeveloperCompanies(
-		options: Partial<Omit<IGDBRouteRequestOptions, "where">> = {},
+		options: Partial<IGDBRouteRequestOptions> = {},
 	): Promise<IGDBResponse<Company[]>> {
 		return this.getCompanies({
 			...options,
@@ -95,7 +105,7 @@ export class IGDBCompaniesRoute extends IGDBRouteBase {
 	 * Get companies that published games (have published games)
 	 */
 	async getPublisherCompanies(
-		options: Partial<Omit<IGDBRouteRequestOptions, "where">> = {},
+		options: Partial<IGDBRouteRequestOptions> = {},
 	): Promise<IGDBResponse<Company[]>> {
 		return this.getCompanies({
 			...options,

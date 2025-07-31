@@ -1,4 +1,10 @@
-import type { Genre, IGDBResponse, IGDBRouteRequestOptions } from "@/@types";
+import type {
+	Genre,
+	GenreQueryBuilder,
+	IGDBResponse,
+	IGDBRouteRequestOptions,
+} from "@/@types";
+import { IGDBQueryFactory } from "@/@types";
 import { IGDBRouteBase } from "./base";
 
 export class IGDBGenresRoute extends IGDBRouteBase {
@@ -12,6 +18,13 @@ export class IGDBGenresRoute extends IGDBRouteBase {
 		options: Partial<IGDBRouteRequestOptions> = {},
 	): Promise<IGDBResponse<Genre[]>> {
 		return this.getAll<Genre>(options);
+	}
+
+	/**
+	 * Create a type-safe query builder for genres
+	 */
+	query(): GenreQueryBuilder {
+		return IGDBQueryFactory.genres();
 	}
 
 	/**

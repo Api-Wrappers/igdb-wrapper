@@ -64,6 +64,21 @@ export interface IGDBRouteRequestOptions {
 	offset?: number;
 }
 
+// Enhanced request options with field-based typing
+export interface IGDBTypedRequestOptions<T> {
+	fields?: Array<keyof T | `${string & keyof T}.*`>;
+	/**
+	 * Include default fields for the specific endpoint
+	 * @default true
+	 */
+	includeDefaultFields?: boolean;
+	where?: string;
+	search?: string;
+	sort?: string | `${string & keyof T} asc` | `${string & keyof T} desc`;
+	limit?: number;
+	offset?: number;
+}
+
 // Main Game interface (based on actual IGDB return data)
 export interface Game {
 	id: number;

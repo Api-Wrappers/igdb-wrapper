@@ -1,14 +1,15 @@
-import type { Game, IGDBResponse, IGDBRouteRequestOptions } from "@/@types";
-import type { IGDBRequestHandler } from "@/request";
+import type {
+	Game,
+	GameQueryBuilder,
+	IGDBResponse,
+	IGDBRouteRequestOptions,
+} from "@/@types";
+import { IGDBQueryFactory } from "@/@types";
 import { IGDBRouteBase } from "./base";
 
 export class IGDBGamesRoute extends IGDBRouteBase {
 	protected readonly endpoint = "games" as const;
 	protected readonly defaultFieldsKey = "games" as const;
-
-	constructor(requestHandler: IGDBRequestHandler) {
-		super(requestHandler);
-	}
 
 	/**
 	 * Get games with enhanced type safety
@@ -20,6 +21,13 @@ export class IGDBGamesRoute extends IGDBRouteBase {
 	}
 
 	/**
+	 * Create a type-safe query builder for games
+	 */
+	query(): GameQueryBuilder {
+		return IGDBQueryFactory.games();
+	}
+
+	/**
 	 * Get a single game by ID
 	 */
 	async getGame(
@@ -27,7 +35,9 @@ export class IGDBGamesRoute extends IGDBRouteBase {
 		options: Partial<Omit<IGDBRouteRequestOptions, "where" | "search">> = {},
 	): Promise<Game | null> {
 		const result = await this.getById<Game>(id, options);
-		return Array.isArray(result) && result.length > 0 ? result[0] : null;
+		return Array.isArray(result) && result.length > 0
+			? (result[0] ?? null)
+			: null;
 	}
 
 	/**
@@ -101,7 +111,7 @@ export class IGDBGamesRoute extends IGDBRouteBase {
 	 */
 	async getGamesByGenre(
 		genreId: number,
-		options: Partial<Omit<IGDBRouteRequestOptions, "where">> = {},
+		options: Partial<IGDBRouteRequestOptions> = {},
 	): Promise<IGDBResponse<Game[]>> {
 		return this.getGames({
 			...options,
@@ -116,7 +126,7 @@ export class IGDBGamesRoute extends IGDBRouteBase {
 	 */
 	async getGamesByPlatform(
 		platformId: number,
-		options: Partial<Omit<IGDBRouteRequestOptions, "where">> = {},
+		options: Partial<IGDBRouteRequestOptions> = {},
 	): Promise<IGDBResponse<Game[]>> {
 		return this.getGames({
 			...options,

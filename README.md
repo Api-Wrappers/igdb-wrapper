@@ -1,19 +1,20 @@
 # IGDB Wrapper
 
-A powerful, type-safe TypeScript wrapper for The Internet Games Database (IGDB) API with advanced query building capabilities.
+Hey there! This is the **IGDB Wrapper**, your new best friend for talking to The Internet Games Database (IGDB) API in TypeScript. We built it to be super powerful and *really* smart about types, making your life a whole lot easier.
 
-## ✨ Features
+## ✨ Why You'll Love It
 
-- 🎯 **Type-Safe Query Building** - Compile-time validation of field names and query structure
-- 🔧 **Advanced Typing** - Full TypeScript support with generics and conditional types
-- 🚀 **Query Builder Pattern** - Fluent API for constructing complex IGDB queries
-- 📊 **Field-Based Typing** - Intelligent type inference based on requested fields
-- ⚡ **Performance Optimized** - Request only the fields you need
-- 🛡️ **Error Prevention** - Catch errors at compile time, not runtime
-- 🔄 **Auto Token Management** - Automatic OAuth token refresh
-- 📚 **Comprehensive Coverage** - Support for Games, Genres, Companies, Platforms, and more
+*   **Type-Safe Queries, Always**: Forget about pesky runtime errors. We'll catch your field name mistakes and query structure hiccups *before* you even hit run. It's validation at compile-time, so you can build with confidence.
+*   **Seriously Smart Typing**: This isn't just basic TypeScript support. We're talking full generics and conditional types that intelligently figure out the data types based on the fields you actually request.
+*   **Fluent Query Builder**: Craft complex IGDB queries like you're writing a sentence. Our API lets you chain methods elegantly, making your code readable and your queries powerful.
+*   **Blazing Fast Performance**: Only grab the data you truly need. Our optimization helps you keep your requests lean and your app snappy.
+*   **Zero Error Worries**: Because we catch errors at compile time, you spend less time debugging and more time building awesome stuff.
+*   **Auto Token Management**: OAuth tokens can be a pain, right? We handle refreshing them automatically so you don't have to lift a finger.
+*   **Everything Covered**: Games, Genres, Companies, Platforms, and more. We've got comprehensive support for all the core IGDB entities.
 
-## 📦 Installation
+## 📦 Get Started
+
+Picking it up is easy:
 
 ```bash
 # npm
@@ -29,7 +30,9 @@ yarn add @tdanks2000/igdb-wrapper
 bun add @tdanks2000/igdb-wrapper
 ```
 
-## 🚀 Quick Start
+## 🚀 Quick Launch
+
+Here’s how you get up and running:
 
 ```typescript
 import { IGDB } from '@tdanks2000/igdb-wrapper';
@@ -44,11 +47,11 @@ const igdb = new IGDB({
 const games = await igdb.games.search('The Witcher 3');
 ```
 
-## 🎯 Advanced Usage
+## 🎯 Diving Deeper
 
-### Query Builder Pattern
+### The Query Builder Pattern
 
-The query builder provides a fluent, type-safe way to construct complex IGDB queries:
+Our query builder is where the real magic happens. It's a super fluent and type-safe way to build those tricky IGDB queries:
 
 ```typescript
 import { IGDB, IGDBQueryFactory } from '@tdanks2000/igdb-wrapper';
@@ -77,9 +80,9 @@ const games = await igdb.games.getGames({
 });
 ```
 
-### Specialized Query Methods
+### Handy Specialized Query Methods
 
-Each entity type has specialized methods for common use cases:
+Every entity type has special methods for the stuff you do all the time:
 
 ```typescript
 // Games
@@ -112,9 +115,9 @@ const platformQuery = IGDBQueryFactory.platforms()
   .searchByName('PlayStation');
 ```
 
-### Field-Based Typing
+### Smart Field-Based Typing
 
-Request only the fields you need for optimal performance:
+Just ask for what you need for optimal performance:
 
 ```typescript
 // Minimal fields for list views
@@ -134,9 +137,9 @@ const gameDetail = await igdb.games.getGame(1942, {
 });
 ```
 
-### Complex Query Building
+### Building Really Complex Queries
 
-Chain multiple conditions and sorting options:
+You can chain tons of conditions and sorting options:
 
 ```typescript
 const complexQuery = IGDBQueryFactory.games()
@@ -159,12 +162,12 @@ const complexQuery = IGDBQueryFactory.games()
   .offset(20);
 ```
 
-## 📚 API Reference
+## 📚 API Overview
 
 ### Core Classes
 
 #### `IGDB`
-Main client class for interacting with the IGDB API.
+This is your main client for talking to the IGDB API.
 
 ```typescript
 const igdb = new IGDB({
@@ -174,10 +177,10 @@ const igdb = new IGDB({
 ```
 
 #### `IGDBQueryFactory`
-Factory for creating type-safe query builders.
+Your starting point for creating type-safe query builders.
 
 ```typescript
-// Available query builders
+// Here's what you can build queries for:
 IGDBQueryFactory.games()      // GameQueryBuilder
 IGDBQueryFactory.genres()     // GenreQueryBuilder
 IGDBQueryFactory.companies()  // CompanyQueryBuilder
@@ -231,14 +234,14 @@ await igdb.companies.getPublisherCompanies(options);
 
 ### Query Builder Methods
 
-#### Common Methods (All Query Builders)
+#### Common Methods (Works for All Query Builders)
 ```typescript
 .select(...fields)           // Add fields to select
 .excludeDefaults()           // Exclude default fields
 .includeDefaults()           // Include default fields (default)
 .where(condition)            // Add WHERE condition
 .whereAnd(...conditions)     // Add multiple AND conditions
-.whereOr(...conditions)      // Add multiple OR conditions
+.whereOr(...conditions)     // Add multiple OR conditions
 .sortBy(field, direction)    // Sort by field
 .sortByMultiple(...sorts)    // Sort by multiple fields
 .limit(value)                // Set limit
@@ -261,7 +264,7 @@ await igdb.companies.getPublisherCompanies(options);
 .upcoming()                  // Get upcoming games
 ```
 
-## 🔧 Development
+## 🔧 Getting Your Dev Environment Ready
 
 ### Setup
 ```bash
@@ -283,56 +286,55 @@ bun run biome check .
 
 ### Environment Variables
 ```bash
-# For API access
+# For API access, set these:
 export TWITCH_CLIENT_ID='your-client-id'
 export TWITCH_CLIENT_SECRET='your-client-secret'
 
-# Or for demo mode (no API calls)
-# Leave unset to run in demo mode
+# Or, if you leave these unset, it'll run in demo mode (no actual API calls)
 ```
 
-## 🎯 Type Safety Features
+## 🎯 Our Awesome Type Safety Features
 
 ### Field Validation
 ```typescript
-// ✅ Valid fields (compiles)
+// ✅ This totally works (compiles like a dream!)
 .select('id', 'name', 'cover.*', 'genres.*')
 
-// ❌ Invalid fields (TypeScript error)
+// ❌ This will give you a TypeScript error (caught early!)
 .select('invalid_field', 'name.*') // Error: 'invalid_field' not assignable
 ```
 
 ### Query Building
 ```typescript
-// ✅ Type-safe query building
+// ✅ Building queries is completely type-safe
 const query = IGDBQueryFactory.games()
   .select('id', 'name')
   .where('rating >= 80')
-  .sortBy('name', 'asc'); // Only 'asc' | 'desc' allowed
+  .sortBy('name', 'asc'); // Only 'asc' or 'desc' allowed here!
 
-// ❌ Type errors caught at compile time
+// ❌ Type errors will jump out at compile time
 .sortBy('name', 'invalid') // Error: 'invalid' not assignable
 ```
 
 ### Response Typing
 ```typescript
-// Responses are properly typed based on the entity
+// Your responses are perfectly typed based on the entity you're querying!
 const games: Game[] = await igdb.games.getGames();
 const genres: Genre[] = await igdb.genres.getGenres();
 const companies: Company[] = await igdb.companies.getCompanies();
 ```
 
-## 🚀 Performance Tips
+## 🚀 Pro-Tips for Performance
 
-1. **Request Only Needed Fields**: Use `select()` to specify exactly which fields you need
-2. **Use `excludeDefaults()`**: When you want complete control over field selection
-3. **Limit Results**: Always use `limit()` to prevent large data transfers
-4. **Cache Results**: Implement caching for frequently accessed data
-5. **Batch Requests**: Use `getByIds()` for multiple items instead of individual calls
+1.  **Be Specific**: Use `select()` to ask for *only* the fields you absolutely need.
+2.  **Strip Defaults**: If you want full control over your field selection, `excludeDefaults()` is your friend.
+3.  **Keep it Small**: Always use `limit()` to avoid hauling in massive amounts of data.
+4.  **Smart Caching**: If you fetch the same stuff a lot, cache it! Your app will thank you.
+5.  **Batch It Up**: Need multiple items? `getByIds()` is way more efficient than calling for each one individually.
 
-## 🤝 Contributing
+## 🤝 Want to Help Out?
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are super welcome! Feel free to send over a Pull Request.
 
 ## 📄 License
 
@@ -344,7 +346,6 @@ MIT
 
 <p align="center">
 <a target="_blank" href="https://tdanks.com/mental-health/quote">
-❤️ Reminder that <strong><i>you are great, you are enough, and your presence is valued.</i></strong> If you are struggling with your mental health, please reach out to someone you love and consult a professional. You are not alone. ❤️
+❤️ Quick reminder: <strong><i>you are great, you are enough, and we value your presence.</i></strong> If you're going through a tough time with your mental health, please reach out to someone you trust and consider talking to a professional. You're never alone. ❤️
 </a>
 </p>
-

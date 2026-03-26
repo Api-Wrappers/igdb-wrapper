@@ -1,6 +1,12 @@
 # igdb-wrapper
 
-A type-safe TypeScript client for the [IGDB API](https://api.igdb.com) with a fluent query builder, automatic retries, and built-in rate limiting.
+[![npm version](https://img.shields.io/npm/v/@tdanks2000/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@tdanks2000/igdb-wrapper)
+[![npm downloads](https://img.shields.io/npm/dm/@tdanks2000/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@tdanks2000/igdb-wrapper)
+[![license](https://img.shields.io/npm/l/@tdanks2000/igdb-wrapper?color=green)](https://github.com/tdanks2000/igdb-wrapper/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/tdanks2000/igdb-wrapper/ci.yml?branch=main)](https://github.com/tdanks2000/igdb-wrapper/actions)
+
+A type-safe TypeScript client for the [IGDB API](https://api.igdb.com) with a fluent
+query builder, automatic retries, and built-in rate limiting.
 
 ```ts
 const games = await client.games

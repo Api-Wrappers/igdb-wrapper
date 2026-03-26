@@ -78,4 +78,14 @@ console.log(game?.name); // "Elden Ring"
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/tdanks2000/tmdb-wrapper/blob/main/LICENSE) file for details.
+
+<br/>
+
+# ❤️
+
+<p align="center">
+<a target="_blank" href="https://tdanks.com/mental-health/quote">
+❤️ Reminder that <strong><i>you are great, you are enough, and your presence is valued.</i></strong> If you are struggling with your mental health, please reach out to someone you love and consult a professional. You are not alone. ❤️
+</a>
+</p>

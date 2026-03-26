@@ -1,6 +1,7 @@
 {
 	"name": "igdb-wrapper",
 	"version": "0.1.0",
+	"description": "Type-safe TypeScript client for the IGDB API with a fluent query builder, automatic retries, and built-in rate limiting",
 	"type": "module",
 	"module": "src/index.ts",
 	"main": "dist/index.cjs",
@@ -12,12 +13,41 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"README.md",
+		"LICENSE"
 	],
 	"scripts": {
 		"dev": "bun run src/index.ts",
 		"build": "tsdown",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"prepublishOnly": "npm run typecheck && npm run build",
+		"release": "npm run prepublishOnly && npm publish"
+	},
+	"keywords": [
+		"igdb",
+		"igdb-api",
+		"twitch",
+		"games",
+		"game-database",
+		"query-builder",
+		"typescript",
+		"type-safe",
+		"api-client",
+		"wrapper"
+	],
+	"author": "Your Name <you@example.com> (https://yoursite.com)",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yourusername/igdb-wrapper.git"
+	},
+	"homepage": "https://github.com/yourusername/igdb-wrapper#readme",
+	"bugs": {
+		"url": "https://github.com/yourusername/igdb-wrapper/issues"
+	},
+	"engines": {
+		"node": ">=18"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",

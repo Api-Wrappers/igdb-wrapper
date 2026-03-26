@@ -1,0 +1,29 @@
+{
+	"name": "igdb-wrapper",
+	"version": "0.1.0",
+	"type": "module",
+	"module": "src/index.ts",
+	"main": "dist/index.cjs",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"dev": "bun run src/index.ts",
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"tsdown": "^0.21.5"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}

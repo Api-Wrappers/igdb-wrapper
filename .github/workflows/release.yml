@@ -40,6 +40,6 @@ jobs:
       - name: Create version PR or publish
         uses: changesets/action@v1
         with:
-          publish: npm publish --provenance
+          publish: npm publish --access public --provenance
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

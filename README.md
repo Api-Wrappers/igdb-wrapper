@@ -28,13 +28,13 @@ const games = await client.games
 ## Installation
 
 ```bash
-npm install igdb-wrapper
+npm install @tdanks2000/igdb-wrapper
 # or
-yarn add igdb-wrapper
+yarn add @tdanks2000/igdb-wrapper
 # or
-pnpm add igdb-wrapper
+pnpm add @tdanks2000/igdb-wrapper
 # or
-bun add igdb-wrapper
+bun add @tdanks2000/igdb-wrapper
 ```
 
 > **Requirements:** Node.js 18+ (uses native `fetch`). TypeScript 5+ recommended.
@@ -46,7 +46,7 @@ bun add igdb-wrapper
 You'll need a [Twitch Developer application](https://dev.twitch.tv/console/apps) to obtain a `client_id` and `client_secret`.
 
 ```ts
-import { IGDBClient } from "igdb-wrapper";
+import { IGDBClient } from "@tdanks2000/igdb-wrapper";
 
 const client = new IGDBClient({
   clientId: process.env.TWITCH_CLIENT_ID!,
@@ -78,7 +78,7 @@ console.log(game?.name); // "Elden Ring"
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/tdanks2000/tmdb-wrapper/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/tdanks2000/igdb-wrapper/blob/main/LICENSE) file for details.
 
 <br/>
 

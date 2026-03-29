@@ -91,7 +91,7 @@ rateLimit: {
 ## Full example
 
 ```ts
-import { IGDBClient } from "igdb-wrapper";
+import { IGDBClient } from "@tdanks2000/igdb-wrapper";
 
 const client = new IGDBClient({
   clientId: process.env.TWITCH_CLIENT_ID!,

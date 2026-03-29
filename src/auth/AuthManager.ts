@@ -1,4 +1,4 @@
-import { IGDBAuthError } from "../errors.ts";
+import { IGDBAuthError } from "../errors";
 
 const TOKEN_BUFFER_MS = 60_000;
 

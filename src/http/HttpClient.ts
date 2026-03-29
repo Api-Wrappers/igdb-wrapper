@@ -1,9 +1,9 @@
-import type { AuthManager } from "../auth/AuthManager.ts";
-import { IGDBAuthError, IGDBError, IGDBRateLimitError } from "../errors.ts";
-import type { RateLimiterOptions } from "./rateLimiter.ts";
-import { DEFAULT_RATE_LIMITER, RateLimiter } from "./rateLimiter.ts";
-import type { RetryOptions } from "./retry.ts";
-import { DEFAULT_RETRY, withRetry } from "./retry.ts";
+import type { AuthManager } from "../auth/AuthManager";
+import { IGDBAuthError, IGDBError, IGDBRateLimitError } from "../errors";
+import type { RateLimiterOptions } from "./rateLimiter";
+import { DEFAULT_RATE_LIMITER, RateLimiter } from "./rateLimiter";
+import type { RetryOptions } from "./retry";
+import { DEFAULT_RETRY, withRetry } from "./retry";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
 

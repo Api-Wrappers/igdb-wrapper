@@ -1,4 +1,4 @@
-import type { Condition } from "../types/query.types.ts";
+import type { Condition } from "../types/query.types";
 
 export interface WhereHelpers {
 	/** Joins conditions with | (OR) */

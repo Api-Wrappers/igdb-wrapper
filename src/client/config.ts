@@ -1,5 +1,5 @@
-import type { RateLimiterOptions } from "../http/rateLimiter.ts";
-import type { RetryOptions } from "../http/retry.ts";
+import type { RateLimiterOptions } from "../http/rateLimiter";
+import type { RetryOptions } from "../http/retry";
 
 export interface IGDBClientConfig {
 	clientId: string;

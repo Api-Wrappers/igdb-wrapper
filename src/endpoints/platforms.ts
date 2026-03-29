@@ -1,6 +1,6 @@
-import type { HttpClient } from "../http/HttpClient.ts";
-import { QueryBuilder } from "../query/QueryBuilder.ts";
-import type { Platform } from "../types/models.ts";
+import type { HttpClient } from "../http/HttpClient";
+import { QueryBuilder } from "../query/QueryBuilder";
+import type { Platform } from "../types/models";
 
 export class PlatformsEndpoint {
 	readonly #http: HttpClient;

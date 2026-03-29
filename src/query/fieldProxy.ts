@@ -2,8 +2,8 @@ import type {
 	ConditionBuilder,
 	SelectProxy,
 	WhereProxy,
-} from "../types/query.types.ts";
-import { buildConditionBuilder } from "./operators.ts";
+} from "../types/query.types";
+import { buildConditionBuilder } from "./operators";
 
 export const FIELD_PATH = Symbol("fieldPath");
 

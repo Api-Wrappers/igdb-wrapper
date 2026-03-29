@@ -1,4 +1,4 @@
-import type { Condition, ConditionBuilder } from "../types/query.types.ts";
+import type { Condition, ConditionBuilder } from "../types/query.types";
 
 function condition(raw: string): Condition {
 	return { raw };

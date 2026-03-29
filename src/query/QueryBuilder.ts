@@ -1,21 +1,17 @@
-import { IGDBNotFoundError, IGDBValidationError } from "../errors.ts";
-import type {
-	Condition,
-	SelectProxy,
-	WhereProxy,
-} from "../types/query.types.ts";
-import type { QueryAST, SortClause } from "./ast.ts";
-import { emptyAST } from "./ast.ts";
-import { compileAST } from "./compiler.ts";
+import { IGDBNotFoundError, IGDBValidationError } from "../errors";
+import type { Condition, SelectProxy, WhereProxy } from "../types/query.types";
+import type { QueryAST, SortClause } from "./ast";
+import { emptyAST } from "./ast";
+import { compileAST } from "./compiler";
 import {
 	createSelectProxy,
 	createSortProxy,
 	createWhereProxy,
 	extractFieldPaths,
 	extractSortPath,
-} from "./fieldProxy.ts";
-import type { WhereHelpers } from "./helpers.ts";
-import { whereHelpers } from "./helpers.ts";
+} from "./fieldProxy";
+import type { WhereHelpers } from "./helpers";
+import { whereHelpers } from "./helpers";
 
 export type ExecuteFn<T> = (query: string) => Promise<T[]>;
 export type CountFn = (query: string) => Promise<number>;

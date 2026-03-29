@@ -1,10 +1,10 @@
-import { AuthManager } from "../auth/AuthManager.ts";
-import { CompaniesEndpoint } from "../endpoints/companies.ts";
-import { GamesEndpoint } from "../endpoints/games.ts";
-import { GenresEndpoint } from "../endpoints/genres.ts";
-import { PlatformsEndpoint } from "../endpoints/platforms.ts";
-import { HttpClient } from "../http/HttpClient.ts";
-import type { IGDBClientConfig } from "./config.ts";
+import { AuthManager } from "../auth/AuthManager";
+import { CompaniesEndpoint } from "../endpoints/companies";
+import { GamesEndpoint } from "../endpoints/games";
+import { GenresEndpoint } from "../endpoints/genres";
+import { PlatformsEndpoint } from "../endpoints/platforms";
+import { HttpClient } from "../http/HttpClient";
+import type { IGDBClientConfig } from "./config";
 
 export class IGDBClient {
 	readonly games: GamesEndpoint;

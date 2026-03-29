@@ -1,4 +1,4 @@
-import type { QueryAST } from "./ast.ts";
+import type { QueryAST } from "./ast";
 
 export function compileAST(ast: QueryAST): string {
 	const parts: string[] = [];

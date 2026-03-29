@@ -1,6 +1,6 @@
-import type { HttpClient } from "../http/HttpClient.ts";
-import { QueryBuilder } from "../query/QueryBuilder.ts";
-import type { Game } from "../types/models.ts";
+import type { HttpClient } from "../http/HttpClient";
+import { QueryBuilder } from "../query/QueryBuilder";
+import type { Game } from "../types/models";
 
 export class GamesEndpoint {
 	readonly #http: HttpClient;

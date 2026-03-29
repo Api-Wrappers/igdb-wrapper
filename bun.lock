@@ -3,7 +3,7 @@
 	"configVersion": 1,
 	"workspaces": {
 		"": {
-			"name": "@tdanks2000/igdb-wrapper",
+			"name": "@api-wrappers/igdb-wrapper",
 			"devDependencies": {
 				"@changesets/cli": "^2.30.0",
 				"@types/bun": "latest",

@@ -22,7 +22,7 @@ Error
 Base class for all library errors. Catch this if you want to handle any IGDB-related failure in one place.
 
 ```ts
-import { IGDBError } from "@tdanks2000/igdb-wrapper";
+import { IGDBError } from "@api-wrappers/igdb-wrapper";
 
 try {
   await client.games.findById(1);
@@ -40,7 +40,7 @@ try {
 Thrown when the API returns a `401 Unauthorized` response. This usually means your `clientId` or `clientSecret` is wrong, or your token has been revoked.
 
 ```ts
-import { IGDBAuthError } from "@tdanks2000/igdb-wrapper";
+import { IGDBAuthError } from "@api-wrappers/igdb-wrapper";
 
 if (err instanceof IGDBAuthError) {
   console.error("Authentication failed — check your credentials");
@@ -56,7 +56,7 @@ Thrown when the API returns a `429 Too Many Requests` response. The `retryAfterM
 The built-in rate limiter and retry logic will handle most transient rate limit hits automatically. This error is only surfaced when all retry attempts are exhausted.
 
 ```ts
-import { IGDBRateLimitError } from "@tdanks2000/igdb-wrapper";
+import { IGDBRateLimitError } from "@api-wrappers/igdb-wrapper";
 
 if (err instanceof IGDBRateLimitError) {
   console.warn(`Rate limited. Retry after ${err.retryAfterMs}ms`);
@@ -74,7 +74,7 @@ if (err instanceof IGDBRateLimitError) {
 Thrown by `.firstOrThrow()` and `findById()` when the query returns no results.
 
 ```ts
-import { IGDBNotFoundError } from "@tdanks2000/igdb-wrapper";
+import { IGDBNotFoundError } from "@api-wrappers/igdb-wrapper";
 
 if (err instanceof IGDBNotFoundError) {
   console.warn(`No results on endpoint: ${err.endpoint}`);
@@ -92,7 +92,7 @@ if (err instanceof IGDBNotFoundError) {
 Thrown when you pass invalid arguments to the query builder — for example, a `limit()` value outside `1–500`.
 
 ```ts
-import { IGDBValidationError } from "@tdanks2000/igdb-wrapper";
+import { IGDBValidationError } from "@api-wrappers/igdb-wrapper";
 
 if (err instanceof IGDBValidationError) {
   // Fix the query — this is a programming error, not a runtime one
@@ -116,7 +116,7 @@ import {
   IGDBNotFoundError,
   IGDBRateLimitError,
   IGDBValidationError,
-} from "@tdanks2000/igdb-wrapper";
+} from "@api-wrappers/igdb-wrapper";
 
 try {
   const game = await client.games.findById(9999999);

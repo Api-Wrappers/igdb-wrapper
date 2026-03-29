@@ -52,7 +52,7 @@ bun add @tdanks2000/igdb-wrapper
 You'll need a [Twitch Developer application](https://dev.twitch.tv/console/apps) to obtain a `client_id` and `client_secret`.
 
 ```ts
-import { IGDBClient } from "@tdanks2000/igdb-wrapper";
+import { IGDBClient } from "@api-wrappers/igdb-wrapper";
 
 const client = new IGDBClient({
   clientId: process.env.TWITCH_CLIENT_ID!,

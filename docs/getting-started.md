@@ -40,7 +40,7 @@ TWITCH_CLIENT_SECRET=your_client_secret_here
 ## Creating a Client
 
 ```ts
-import { IGDBClient } from "@tdanks2000/igdb-wrapper";
+import { IGDBClient } from "@api-wrappers/igdb-wrapper";
 
 const client = new IGDBClient({
   clientId: process.env.TWITCH_CLIENT_ID!,

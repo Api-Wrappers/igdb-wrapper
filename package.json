@@ -45,7 +45,7 @@
 		"nodejs",
 		"bun"
 	],
-	"author": "tdanks2000",
+	"author": "api-wrappers",
 	"license": "MIT",
 	"repository": {
 		"type": "git",

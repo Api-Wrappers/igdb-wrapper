@@ -1,9 +1,9 @@
 # igdb-wrapper
 
-[![npm version](https://img.shields.io/npm/v/@tdanks2000/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@tdanks2000/igdb-wrapper)
-[![npm downloads](https://img.shields.io/npm/dm/@tdanks2000/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@tdanks2000/igdb-wrapper)
-[![license](https://img.shields.io/npm/l/@tdanks2000/igdb-wrapper?color=green)](https://github.com/tdanks2000/igdb-wrapper/blob/main/LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/tdanks2000/igdb-wrapper/ci.yml?branch=main)](https://github.com/tdanks2000/igdb-wrapper/actions)
+[![npm version](https://img.shields.io/npm/v/@api-wrappers/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@api-wrappers/igdb-wrapper)
+[![npm downloads](https://img.shields.io/npm/dm/@api-wrappers/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@api-wrappers/igdb-wrapper)
+[![license](https://img.shields.io/github/license/TDanks2000/igdb-wrapper?color=green)](https://github.com/TDanks2000/igdb-wrapper/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/TDanks2000/igdb-wrapper/ci.yml?branch=main)](https://github.com/TDanks2000/igdb-wrapper/actions)
 
 A type-safe TypeScript client for the [IGDB API](https://api.igdb.com) with a fluent
 query builder, automatic retries, and built-in rate limiting.
@@ -34,13 +34,13 @@ const games = await client.games
 ## Installation
 
 ```bash
-npm install @tdanks2000/igdb-wrapper
+npm install @api-wrappers/igdb-wrapper
 # or
-yarn add @tdanks2000/igdb-wrapper
+yarn add @api-wrappers/igdb-wrapper
 # or
-pnpm add @tdanks2000/igdb-wrapper
+pnpm add @api-wrappers/igdb-wrapper
 # or
-bun add @tdanks2000/igdb-wrapper
+bun add @api-wrappers/igdb-wrapper
 ```
 
 > **Requirements:** Node.js 18+ (uses native `fetch`). TypeScript 5+ recommended.
@@ -84,7 +84,7 @@ console.log(game?.name); // "Elden Ring"
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/tdanks2000/igdb-wrapper/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/api-wrappers/igdb-wrapper/blob/main/LICENSE) file for details.
 
 <br/>
 

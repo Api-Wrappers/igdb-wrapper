@@ -2,16 +2,19 @@
 	"name": "@tdanks2000/igdb-wrapper",
 	"version": "0.3.3",
 	"description": "Type-safe TypeScript client for the IGDB API with a fluent query builder, automatic retries, and built-in rate limiting",
+	"module": "./dist/index.mjs",
 	"type": "module",
 	"main": "./dist/index.cjs",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+	"types": "./dist/index.d.mts",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js",
+			"types": "./dist/index.d.mts",
+			"import": "./dist/index.mjs",
 			"require": "./dist/index.cjs"
 		}
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"files": [
 		"dist",
@@ -42,7 +45,7 @@
 		"nodejs",
 		"bun"
 	],
-	"author": "Prostarz",
+	"author": "tdanks2000",
 	"license": "MIT",
 	"repository": {
 		"type": "git",

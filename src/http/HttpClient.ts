@@ -1,17 +1,41 @@
+import {
+	ApiError,
+	createAuthPlugin,
+	createClient,
+	createRateLimitPlugin,
+	RateLimitError,
+} from "@api-wrappers/api-core";
+import type {
+	ApiPlugin,
+	ClientConfig,
+	RateLimitPluginOptions,
+	RetryConfig,
+} from "@api-wrappers/api-core";
 import type { AuthManager } from "../auth/AuthManager";
 import { IGDBAuthError, IGDBError, IGDBRateLimitError } from "../errors";
-import type { RateLimiterOptions } from "./rateLimiter";
-import { DEFAULT_RATE_LIMITER, RateLimiter } from "./rateLimiter";
-import type { RetryOptions } from "./retry";
-import { DEFAULT_RETRY, withRetry } from "./retry";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
+
+const DEFAULT_RETRY: RetryConfig = {
+	maxAttempts: 3,
+	delayMs: 300,
+};
+
+const DEFAULT_RATE_LIMIT: RateLimitPluginOptions = {
+	maxConcurrent: 4,
+	minTimeMs: 250,
+};
 
 export interface HttpClientOptions {
 	clientId: string;
 	auth: AuthManager;
-	retry?: Partial<RetryOptions>;
-	rateLimit?: Partial<RateLimiterOptions>;
+	retry?: Partial<RetryConfig>;
+	rateLimit?: RateLimitPluginOptions;
+	timeoutMs?: number;
+	fetch?: ClientConfig["fetch"];
+	transport?: ClientConfig["transport"];
+	plugins?: ApiPlugin[];
+	logger?: ClientConfig["logger"];
 }
 
 interface IGDBCountResponse {
@@ -19,73 +43,103 @@ interface IGDBCountResponse {
 }
 
 export class HttpClient {
-	readonly #options: HttpClientOptions;
-	readonly #limiter: RateLimiter;
-	readonly #retry: RetryOptions;
+	readonly #client: ReturnType<typeof createClient>;
 
 	constructor(options: HttpClientOptions) {
-		this.#options = options;
-		this.#limiter = new RateLimiter({
-			...DEFAULT_RATE_LIMITER,
-			...options.rateLimit,
+		this.#client = createClient({
+			baseUrl: IGDB_BASE,
+			defaultHeaders: {
+				accept: "application/json",
+				"client-id": options.clientId,
+				"content-type": "text/plain",
+			},
+			fetch: options.fetch,
+			logger: options.logger,
+			plugins: [
+				createRateLimitPlugin({
+					...DEFAULT_RATE_LIMIT,
+					...options.rateLimit,
+				}),
+				createAuthPlugin({
+					getToken: () => options.auth.getAccessToken(),
+				}),
+				...(options.plugins ?? []),
+			],
+			retry: {
+				...DEFAULT_RETRY,
+				...options.retry,
+			},
+			timeoutMs: options.timeoutMs,
+			transport: options.transport,
 		});
-		this.#retry = { ...DEFAULT_RETRY, ...options.retry };
 	}
 
 	async request<T>(endpoint: string, body: string): Promise<T[]> {
-		await this.#limiter.acquire();
-		try {
-			return await withRetry(
-				() => this.#send<T[]>(endpoint, body),
-				this.#retry,
-			);
-		} finally {
-			this.#limiter.release();
-		}
+		return this.#post<T[]>(endpoint, body);
 	}
 
 	async requestCount(endpoint: string, body: string): Promise<number> {
-		await this.#limiter.acquire();
-		try {
-			const res = await withRetry(
-				() => this.#send<IGDBCountResponse>(`${endpoint}/count`, body),
-				this.#retry,
-			);
-			return (res as IGDBCountResponse).count;
-		} finally {
-			this.#limiter.release();
-		}
+		const res = await this.#post<IGDBCountResponse>(`${endpoint}/count`, body);
+		return res.count;
 	}
 
-	async #send<T>(endpoint: string, body: string): Promise<T> {
-		const token = await this.#options.auth.getAccessToken();
+	dispose(): Promise<void> {
+		return this.#client.dispose();
+	}
 
-		const res = await fetch(`${IGDB_BASE}/${endpoint}`, {
-			method: "POST",
-			headers: {
-				"Client-ID": this.#options.clientId,
-				Authorization: `Bearer ${token}`,
-				"Content-Type": "text/plain",
-				Accept: "application/json",
-			},
-			body,
-		});
+	async #post<T>(endpoint: string, body: string): Promise<T> {
+		try {
+			return await this.#client.post<T>(`/${endpoint}`, body);
+		} catch (error) {
+			throw toIGDBError(error, endpoint);
+		}
+	}
+}
 
-		if (res.status === 401) {
-			throw new IGDBAuthError(`Unauthorized — check your client credentials`);
+function toIGDBError(error: unknown, endpoint: string): IGDBError {
+	const cause = unwrapPluginError(error);
+	if (cause instanceof IGDBError) return cause;
+
+	if (cause instanceof RateLimitError) {
+		return new IGDBRateLimitError(cause.retryAfterMs);
+	}
+
+	if (cause instanceof ApiError) {
+		if (cause.status === 401) {
+			return new IGDBAuthError("Unauthorized - check your client credentials");
 		}
 
-		if (res.status === 429) {
-			const retryAfter = Number(res.headers.get("Retry-After") ?? 1) * 1000;
-			throw new IGDBRateLimitError(retryAfter);
-		}
+		return new IGDBError(
+			`HTTP ${cause.status} on /${endpoint}: ${formatBody(
+				cause.responseBody,
+			)}`,
+		);
+	}
 
-		if (!res.ok) {
-			throw new IGDBError(
-				`HTTP ${res.status} on /${endpoint}: ${await res.text()}`,
-			);
-		}
+	if (cause instanceof Error) {
+		return new IGDBError(cause.message);
+	}
 
-		return res.json() as Promise<T>;
+	return new IGDBError(String(cause));
+}
+
+function unwrapPluginError(error: unknown): unknown {
+	if (
+		error instanceof Error &&
+		error.name === "PluginError" &&
+		error.cause !== undefined
+	) {
+		return unwrapPluginError(error.cause);
+	}
+	return error;
+}
+
+function formatBody(body: unknown): string {
+	if (body === undefined) return "";
+	if (typeof body === "string") return body;
+	try {
+		return JSON.stringify(body);
+	} catch {
+		return String(body);
 	}
 }

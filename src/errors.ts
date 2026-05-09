@@ -13,9 +13,13 @@ export class IGDBAuthError extends IGDBError {
 }
 
 export class IGDBRateLimitError extends IGDBError {
-	readonly retryAfterMs: number;
-	constructor(retryAfterMs: number) {
-		super(`Rate limit exceeded. Retry after ${retryAfterMs}ms`);
+	readonly retryAfterMs: number | undefined;
+	constructor(retryAfterMs?: number) {
+		super(
+			retryAfterMs === undefined
+				? "Rate limit exceeded"
+				: `Rate limit exceeded. Retry after ${retryAfterMs}ms`,
+		);
 		this.name = "IGDBRateLimitError";
 		this.retryAfterMs = retryAfterMs;
 	}

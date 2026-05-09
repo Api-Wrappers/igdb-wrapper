@@ -51,7 +51,7 @@ if (err instanceof IGDBAuthError) {
 
 ### IGDBRateLimitError
 
-Thrown when the API returns a `429 Too Many Requests` response. The `retryAfterMs` property contains the number of milliseconds to wait before retrying.
+Thrown when the API returns a `429 Too Many Requests` response. The `retryAfterMs` property contains the number of milliseconds to wait before retrying when the API sends a `Retry-After` header.
 
 The built-in rate limiter and retry logic will handle most transient rate limit hits automatically. This error is only surfaced when all retry attempts are exhausted.
 
@@ -65,7 +65,7 @@ if (err instanceof IGDBRateLimitError) {
 
 | Property | Type | Description |
 |---|---|---|
-| `retryAfterMs` | `number` | Milliseconds to wait before the next attempt |
+| `retryAfterMs` | `number \| undefined` | Milliseconds to wait before the next attempt, when provided |
 
 ---
 

@@ -7,7 +7,9 @@ export default defineConfig({
   format: ["esm", "cjs"],
   outDir: "./dist",
   dts: true,
-  skipNodeModulesBundle: true,
+  deps: {
+    skipNodeModulesBundle: true,
+  },
   clean: true,
   shims: true,
   fixedExtension: true,

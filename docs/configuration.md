@@ -1,13 +1,20 @@
 # Configuration
 
-`IGDBClient` accepts an `IGDBClientConfig` object. Only `clientId` and `clientSecret` are required — everything else has sensible defaults.
+`IGDBClient` accepts an `IGDBClientConfig` object. Only `clientId` and
+`clientSecret` are required. HTTP execution is powered by
+`@api-wrappers/api-core`.
 
 ```ts
 interface IGDBClientConfig {
   clientId: string;
   clientSecret: string;
-  retry?: Partial<RetryOptions>;
-  rateLimit?: Partial<RateLimiterOptions>;
+  retry?: Partial<RetryConfig>;
+  rateLimit?: RateLimitPluginOptions;
+  timeoutMs?: number;
+  fetch?: typeof globalThis.fetch;
+  transport?: Transport;
+  plugins?: ApiPlugin[];
+  logger?: LoggerInterface;
 }
 ```
 
@@ -15,22 +22,20 @@ interface IGDBClientConfig {
 
 ## Retry
 
-The client retries failed requests with **exponential backoff**. The delay between attempt `n` is `baseDelayMs * 2^n`.
+The client retries transient failures with api-core's retry loop. Defaults are
+`maxAttempts: 3` and `delayMs: 300`. Backoff is exponential, and api-core uses
+jitter unless you set `jitter: false`.
 
 ```ts
-interface RetryOptions {
-  maxAttempts: number; // default: 3
-  baseDelayMs: number; // default: 300
+interface RetryConfig {
+  maxAttempts: number;
+  delayMs?: number;
+  jitter?: boolean;
+  retriableStatusCodes?: number[];
 }
 ```
 
-| Attempt | Delay (default) |
-|---|---|
-| 1st retry | 300ms |
-| 2nd retry | 600ms |
-| 3rd retry | 1200ms |
-
-**Example — more aggressive retries:**
+**Example - more aggressive retries:**
 
 ```ts
 const client = new IGDBClient({
@@ -38,12 +43,12 @@ const client = new IGDBClient({
   clientSecret: "...",
   retry: {
     maxAttempts: 5,
-    baseDelayMs: 500,
+    delayMs: 500,
   },
 });
 ```
 
-**Example — disable retries:**
+**Example - disable retries:**
 
 ```ts
 retry: { maxAttempts: 1 }
@@ -53,42 +58,58 @@ retry: { maxAttempts: 1 }
 
 ## Rate Limiting
 
-The built-in rate limiter respects IGDB's constraints by limiting concurrent requests and enforcing a minimum interval between calls.
+The built-in rate limiter uses api-core's rate limit plugin. Defaults are
+`maxConcurrent: 4` and `minTimeMs: 250`, which keeps requests comfortably within
+IGDB's free tier limit of 4 requests per second.
 
 ```ts
-interface RateLimiterOptions {
-  concurrency: number; // default: 4  — max simultaneous requests
-  intervalMs: number;  // default: 250 — min ms between requests
+interface RateLimitPluginOptions {
+  maxConcurrent?: number;
+  minTimeMs?: number;
+  maxRequestsPerInterval?: number;
+  intervalMs?: number;
 }
 ```
 
-These defaults keep you comfortably within IGDB's free tier limit of 4 requests per second.
-
-**Example — more conservative limits:**
+**Example - more conservative limits:**
 
 ```ts
 const client = new IGDBClient({
   clientId: "...",
   clientSecret: "...",
   rateLimit: {
-    concurrency: 2,
-    intervalMs: 500,
+    maxConcurrent: 2,
+    minTimeMs: 500,
   },
 });
 ```
 
-**Example — higher throughput (if you have a paid plan):**
+**Example - higher throughput:**
 
 ```ts
 rateLimit: {
-  concurrency: 8,
-  intervalMs: 100,
+  maxConcurrent: 8,
+  minTimeMs: 100,
 }
 ```
 
 ---
 
-## Full example
+## Core Options
+
+The wrapper forwards these api-core options to the IGDB HTTP client:
+
+- `timeoutMs` sets a request timeout.
+- `fetch` swaps the fetch implementation and is also used for Twitch token
+  requests.
+- `transport` replaces the IGDB request transport.
+- `plugins` appends additional api-core plugins after the built-in rate limit
+  and auth plugins.
+- `logger` controls api-core diagnostic logging.
+
+---
+
+## Full Example
 
 ```ts
 import { IGDBClient } from "@api-wrappers/igdb-wrapper";
@@ -98,11 +119,12 @@ const client = new IGDBClient({
   clientSecret: process.env.TWITCH_CLIENT_SECRET!,
   retry: {
     maxAttempts: 4,
-    baseDelayMs: 400,
+    delayMs: 400,
   },
   rateLimit: {
-    concurrency: 3,
-    intervalMs: 350,
+    maxConcurrent: 3,
+    minTimeMs: 350,
   },
+  timeoutMs: 10_000,
 });
 ```

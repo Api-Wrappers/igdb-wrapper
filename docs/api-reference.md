@@ -14,13 +14,19 @@ class IGDBClient {
   readonly companies: CompaniesEndpoint;
 
   constructor(config: IGDBClientConfig);
+  dispose(): Promise<void>;
 }
 
 interface IGDBClientConfig {
   clientId: string;
   clientSecret: string;
-  retry?: Partial<RetryOptions>;
-  rateLimit?: Partial<RateLimiterOptions>;
+  retry?: Partial<RetryConfig>;
+  rateLimit?: RateLimitPluginOptions;
+  timeoutMs?: number;
+  fetch?: typeof globalThis.fetch;
+  transport?: Transport;
+  plugins?: ApiPlugin[];
+  logger?: LoggerInterface;
 }
 ```
 
@@ -163,7 +169,7 @@ class IGDBNotFoundError extends IGDBError {
   readonly endpoint: string;
 }
 class IGDBRateLimitError extends IGDBError {
-  readonly retryAfterMs: number;
+  readonly retryAfterMs: number | undefined;
 }
 class IGDBValidationError extends IGDBError {}
 ```
@@ -173,14 +179,18 @@ class IGDBValidationError extends IGDBError {}
 ## Configuration types
 
 ```ts
-interface RetryOptions {
-  maxAttempts: number; // default: 3
-  baseDelayMs: number; // default: 300
+interface RetryConfig {
+  maxAttempts: number;
+  delayMs?: number;
+  jitter?: boolean;
+  retriableStatusCodes?: number[];
 }
 
-interface RateLimiterOptions {
-  concurrency: number; // default: 4
-  intervalMs: number;  // default: 250
+interface RateLimitPluginOptions {
+  maxConcurrent?: number;
+  minTimeMs?: number;
+  maxRequestsPerInterval?: number;
+  intervalMs?: number;
 }
 ```
 

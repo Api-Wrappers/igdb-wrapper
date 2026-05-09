@@ -24,7 +24,7 @@
 	"sideEffects": false,
 	"scripts": {
 		"dev": "bun run src/index.ts",
-		"build": "tsdown",
+		"build": "tsdown --config tsdown.config.mjs --config-loader native",
 		"test": "bun test",
 		"typecheck": "tsc --noEmit",
 		"changeset": "changeset",

@@ -48,6 +48,8 @@ jobs:
         run: |
           NAME="$(node -p "require('./package.json').name")"
           VERSION="$(node -p "require('./package.json').version")"
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${NAME}@${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Generate and verify release notes
@@ -68,6 +70,8 @@ jobs:
         id: release_state
         env:
           GH_TOKEN: ${{ github.token }}
+          PACKAGE_NAME: ${{ steps.release.outputs.name }}
+          PACKAGE_VERSION: ${{ steps.release.outputs.version }}
           TAG: ${{ steps.release.outputs.tag }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
@@ -76,8 +80,24 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+            echo "package_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "package_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          HAS_CHANGESETS=false
+          for changeset in .changeset/*.md; do
+            if [ -e "$changeset" ]; then
+              HAS_CHANGESETS=true
+              break
+            fi
+          done
+          echo "has_changesets=${HAS_CHANGESETS}" >> "$GITHUB_OUTPUT"
+
       - name: Create version PR or publish
         id: changesets
+        if: steps.release_state.outputs.package_published != 'true' || steps.release_state.outputs.has_changesets == 'true'
         uses: changesets/action@v1
         with:
           version: bun run changeset version
@@ -87,7 +107,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub release
-        if: steps.release_state.outputs.exists != 'true'
+        if: always() && steps.release_state.outputs.exists != 'true' && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'skipped')
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}

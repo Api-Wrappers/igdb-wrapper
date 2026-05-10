@@ -45,6 +45,25 @@ If `.select()` is omitted, the query defaults to `fields *` (all top-level field
 
 ---
 
+## fields() and exclude()
+
+Use raw field paths when IGDB adds a field before the wrapper model is updated,
+or when you want to write APICalypse paths directly.
+
+```ts
+const games = await client.games
+  .query()
+  .fields("name", "platforms.name", "cover.image_id")
+  .exclude("screenshots")
+  .limit(10)
+  .execute();
+```
+
+`exclude()` compiles to IGDB's `exclude` clause and is commonly paired with
+`fields *`.
+
+---
+
 ## where()
 
 Filter results using typed condition builders. The callback receives a proxy of your model and an optional helpers object.
@@ -68,7 +87,19 @@ Filter results using typed condition builders. The callback receives a proxy of 
 | `.lt(value)` | `field < value` |
 | `.lte(value)` | `field <= value` |
 | `.in(values[])` | `field = (v1, v2, ...)` |
+| `.notIn(values[])` | `field != (v1, v2, ...)` |
 | `.contains(value)` | `field = [value]` |
+| `.containsAll(values[])` | `field = [v1, v2, ...]` |
+| `.excludesAll(values[])` | `field != [v1, v2, ...]` |
+| `.exact(values[])` | `field = {v1, v2, ...}` |
+| `.isNull()` | `field = null` |
+| `.notNull()` | `field != null` |
+| `.startsWith(value)` | `field = "value"*` |
+| `.endsWith(value)` | `field = *"value"` |
+| `.containsText(value)` | `field = *"value"*` |
+
+Pass `{ caseSensitive: false }` to text matching methods to compile IGDB's
+case-insensitive `~` operator.
 
 ### Multiple conditions (AND)
 
@@ -105,6 +136,18 @@ Use `and` to group sub-expressions:
     g.aggregated_rating.gte(95),
   )
 )
+```
+
+### Raw conditions
+
+For IGDB expressions that are easier to write directly, use `whereRaw()` or
+the `raw` helper:
+
+```ts
+client.games
+  .query()
+  .whereRaw("platforms = {48,6}")
+  .where((g, { raw }) => raw("themes != (42)"));
 ```
 
 ### Nested fields
@@ -186,7 +229,7 @@ const game = await client.games
 
 ### count()
 
-Returns the number of documents matching the current `where`/`search` filters. Useful for building pagination UI. Only available on endpoints that support it (currently `games`).
+Returns the number of documents matching the current `where`/`search` filters. Useful for building pagination UI.
 
 ```ts
 const total = await client.games
@@ -218,6 +261,9 @@ builder.debug()    // logs the internal AST as JSON
 builder.explain()  // logs the compiled IGDB query string
 builder.raw()      // returns the compiled query string
 ```
+
+Use `.apicalypse("...")` to append a raw APICalypse clause after the generated
+query when IGDB supports syntax that does not need a dedicated builder method.
 
 Example:
 

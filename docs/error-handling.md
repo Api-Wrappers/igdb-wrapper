@@ -104,7 +104,7 @@ Common causes:
 - `limit(n)` where `n < 1` or `n > 500`
 - `offset(n)` where `n < 0`
 - `paginate(n)` where `n < 1` or `n > 500`
-- Calling `.count()` on an endpoint that doesn't support it
+- Calling `.count()` on a manually constructed `QueryBuilder` without a count function
 
 ---
 

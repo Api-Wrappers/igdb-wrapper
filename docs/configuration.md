@@ -59,8 +59,9 @@ retry: { maxAttempts: 1 }
 ## Rate Limiting
 
 The built-in rate limiter uses api-core's rate limit plugin. Defaults are
-`maxConcurrent: 4` and `minTimeMs: 250`, which keeps requests comfortably within
-IGDB's free tier limit of 4 requests per second.
+`maxConcurrent: 8`, `maxRequestsPerInterval: 4`, `intervalMs: 1000`, and
+`minTimeMs: 250`, matching IGDB's documented 4 requests-per-second rate limit
+and 8 open-request concurrency limit.
 
 ```ts
 interface RateLimitPluginOptions {
@@ -89,7 +90,8 @@ const client = new IGDBClient({
 ```ts
 rateLimit: {
   maxConcurrent: 8,
-  minTimeMs: 100,
+  maxRequestsPerInterval: 4,
+  intervalMs: 1000,
 }
 ```
 

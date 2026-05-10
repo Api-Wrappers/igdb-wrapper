@@ -7,13 +7,13 @@ igdb-wrapper requires **Node.js 18 or later** and uses the native `fetch` API. T
 ## Installation
 
 ```bash
-npm install igdb-wrapper
+npm install @api-wrappers/igdb-wrapper
 # or
-pnpm add igdb-wrapper
+pnpm add @api-wrappers/igdb-wrapper
 # or
-yarn add igdb-wrapper
+yarn add @api-wrappers/igdb-wrapper
 # or
-bun add igdb-wrapper
+bun add @api-wrappers/igdb-wrapper
 ```
 
 ---

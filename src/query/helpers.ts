@@ -5,6 +5,8 @@ export interface WhereHelpers {
 	or(...conditions: Condition[]): Condition;
 	/** Joins conditions with & (AND) — useful for explicit grouping */
 	and(...conditions: Condition[]): Condition;
+	/** Adds an APICalypse filter expression verbatim. */
+	raw(expression: string): Condition;
 }
 
 export const whereHelpers: WhereHelpers = {
@@ -13,5 +15,8 @@ export const whereHelpers: WhereHelpers = {
 	},
 	and(...conditions) {
 		return { raw: `(${conditions.map((c) => c.raw).join(" & ")})` };
+	},
+	raw(expression) {
+		return { raw: expression.trim().replace(/;$/, "") };
 	},
 };

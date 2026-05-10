@@ -51,6 +51,16 @@ export class QueryBuilder<TModel, TShape = TModel> {
 		});
 	}
 
+	fields(...fields: string[]): QueryBuilder<TModel, TShape> {
+		return this.#clone({ fields: normalizeFieldList(fields) });
+	}
+
+	exclude(...fields: string[]): QueryBuilder<TModel, TShape> {
+		return this.#clone({
+			exclude: [...this.#ast.exclude, ...normalizeFieldList(fields)],
+		});
+	}
+
 	where(
 		builder: (
 			proxy: WhereProxy<TModel>,
@@ -61,6 +71,15 @@ export class QueryBuilder<TModel, TShape = TModel> {
 		const result = builder(proxy, whereHelpers);
 		const conditions = Array.isArray(result) ? result : [result];
 		return this.#clone({ where: [...this.#ast.where, ...conditions] });
+	}
+
+	whereRaw(condition: string): QueryBuilder<TModel, TShape> {
+		return this.#clone({
+			where: [
+				...this.#ast.where,
+				{ raw: condition.trim().replace(/;$/, "") },
+			],
+		});
 	}
 
 	sort(
@@ -90,6 +109,12 @@ export class QueryBuilder<TModel, TShape = TModel> {
 
 	search(term: string): QueryBuilder<TModel, TShape> {
 		return this.#clone({ search: term });
+	}
+
+	apicalypse(clause: string): QueryBuilder<TModel, TShape> {
+		return this.#clone({
+			rawClauses: [...this.#ast.rawClauses, clause],
+		});
 	}
 
 	// ---------------------------------------------------------------------------
@@ -140,7 +165,9 @@ export class QueryBuilder<TModel, TShape = TModel> {
 		}
 		// Only where + search are relevant for a count query.
 		const countAST: QueryAST = {
+			exclude: [],
 			fields: [],
+			rawClauses: [],
 			where: this.#ast.where,
 			search: this.#ast.search,
 		};
@@ -168,4 +195,19 @@ export class QueryBuilder<TModel, TShape = TModel> {
 			currentOffset += pageSize;
 		}
 	}
+}
+
+function normalizeFieldList(fields: string[]): string[] {
+	const normalized = fields.flatMap((field) =>
+		field
+			.split(",")
+			.map((part) => part.trim())
+			.filter(Boolean),
+	);
+
+	if (normalized.length === 0) {
+		throw new IGDBValidationError("at least one field is required");
+	}
+
+	return normalized;
 }

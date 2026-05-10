@@ -1,4 +1,5 @@
 import type { QueryAST } from "./ast";
+import { quoteString } from "./operators";
 
 export function compileAST(ast: QueryAST): string {
 	const parts: string[] = [];
@@ -6,8 +7,12 @@ export function compileAST(ast: QueryAST): string {
 	const fields = ast.fields.length > 0 ? ast.fields : ["*"];
 	parts.push(`fields ${fields.join(",")};`);
 
+	if (ast.exclude.length > 0) {
+		parts.push(`exclude ${ast.exclude.join(",")};`);
+	}
+
 	if (ast.search) {
-		parts.push(`search "${ast.search}";`);
+		parts.push(`search ${quoteString(ast.search)};`);
 	}
 
 	if (ast.where.length > 0) {
@@ -27,5 +32,14 @@ export function compileAST(ast: QueryAST): string {
 		parts.push(`offset ${ast.offset};`);
 	}
 
+	for (const clause of ast.rawClauses) {
+		parts.push(normalizeRawClause(clause));
+	}
+
 	return parts.join("\n");
+}
+
+function normalizeRawClause(clause: string): string {
+	const trimmed = clause.trim();
+	return trimmed.endsWith(";") ? trimmed : `${trimmed};`;
 }

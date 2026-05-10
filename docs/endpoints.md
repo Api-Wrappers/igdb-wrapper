@@ -1,155 +1,147 @@
 # Endpoints
 
-All endpoints are available as properties on the `IGDBClient` instance. Each exposes a `.query()` method returning a fully-typed `QueryBuilder`, plus a handful of convenience methods.
-
-```
-client.games
-client.genres
-client.platforms
-client.companies
-```
-
----
-
-## client.games
-
-Model: `Game`
+Every endpoint documented by the IGDB v4 API is available as a camel-cased
+property on `IGDBClient`. Each property is an `IGDBEndpoint<T>` with:
 
 ```ts
-interface Game {
-  id: number;
-  name: string;
-  slug: string;
-  summary: string;
-  storyline: string;
-  rating: number;
-  rating_count: number;
-  aggregated_rating: number;
-  aggregated_rating_count: number;
-  first_release_date: number; // Unix timestamp
-  cover: Cover;
-  genres: Genre[];
-  platforms: Platform[];
-  involved_companies: InvolvedCompany[];
-  similar_games: Game[];
-  url: string;
-  status: number;
-  category: number;
-}
+endpoint.query();              // QueryBuilder<T>
+endpoint.findMany();           // query().limit(50)
+endpoint.findById(id);         // first result where id = id
+endpoint.search("zelda");      // query().search("zelda").limit(50)
+endpoint.request("fields *;"); // raw APICalypse body
+endpoint.count("where id > 0;");
+endpoint.meta();               // GET /{endpoint}/meta
+endpoint.requestProtobuf("fields id;");
 ```
 
-### Methods
+IGDB only supports `search` on selected endpoints. The wrapper exposes the
+method uniformly so new searchable endpoints do not require a wrapper release;
+the current documented searchable endpoints are exported as
+`IGDB_SEARCHABLE_ENDPOINTS`.
 
-**`query()`** — returns a base `QueryBuilder<Game>` with no filters applied.
+## Endpoint Properties
 
-**`findMany()`** — shorthand for `query().limit(50)`.
+| Client property | IGDB path |
+|---|---|
+| `ageRatings` | `age_ratings` |
+| `ageRatingCategories` | `age_rating_categories` |
+| `ageRatingContentDescriptions` | `age_rating_content_descriptions` |
+| `ageRatingContentDescriptionTypes` | `age_rating_content_description_types` |
+| `ageRatingContentDescriptionsV2` | `age_rating_content_descriptions_v2` |
+| `ageRatingOrganizations` | `age_rating_organizations` |
+| `alternativeNames` | `alternative_names` |
+| `artworks` | `artworks` |
+| `artworkTypes` | `artwork_types` |
+| `characters` | `characters` |
+| `characterGenders` | `character_genders` |
+| `characterMugShots` | `character_mug_shots` |
+| `characterSpecies` | `character_species` |
+| `collections` | `collections` |
+| `collectionMemberships` | `collection_memberships` |
+| `collectionMembershipTypes` | `collection_membership_types` |
+| `collectionRelations` | `collection_relations` |
+| `collectionRelationTypes` | `collection_relation_types` |
+| `collectionTypes` | `collection_types` |
+| `companies` | `companies` |
+| `companyLogos` | `company_logos` |
+| `companySizes` | `company_sizes` |
+| `companyStatuses` | `company_statuses` |
+| `companyTypes` | `company_types` |
+| `companyTypeHistories` | `company_type_histories` |
+| `companyWebsites` | `company_websites` |
+| `covers` | `covers` |
+| `dateFormats` | `date_formats` |
+| `entityTypes` | `entity_types` |
+| `events` | `events` |
+| `eventLogos` | `event_logos` |
+| `eventNetworks` | `event_networks` |
+| `externalGames` | `external_games` |
+| `externalGameSources` | `external_game_sources` |
+| `franchises` | `franchises` |
+| `games` | `games` |
+| `gameEngines` | `game_engines` |
+| `gameEngineLogos` | `game_engine_logos` |
+| `gameLocalizations` | `game_localizations` |
+| `gameModes` | `game_modes` |
+| `gameReleaseFormats` | `game_release_formats` |
+| `gameStatuses` | `game_statuses` |
+| `gameTimeToBeats` | `game_time_to_beats` |
+| `gameTypes` | `game_types` |
+| `gameVersions` | `game_versions` |
+| `gameVersionFeatures` | `game_version_features` |
+| `gameVersionFeatureValues` | `game_version_feature_values` |
+| `gameVideos` | `game_videos` |
+| `genres` | `genres` |
+| `involvedCompanies` | `involved_companies` |
+| `keywords` | `keywords` |
+| `languages` | `languages` |
+| `languageSupports` | `language_supports` |
+| `languageSupportTypes` | `language_support_types` |
+| `multiplayerModes` | `multiplayer_modes` |
+| `networkTypes` | `network_types` |
+| `platforms` | `platforms` |
+| `platformFamilies` | `platform_families` |
+| `platformLogos` | `platform_logos` |
+| `platformTypes` | `platform_types` |
+| `platformVersions` | `platform_versions` |
+| `platformVersionCompanies` | `platform_version_companies` |
+| `platformVersionReleaseDates` | `platform_version_release_dates` |
+| `platformWebsites` | `platform_websites` |
+| `playerPerspectives` | `player_perspectives` |
+| `popularityPrimitives` | `popularity_primitives` |
+| `popularityTypes` | `popularity_types` |
+| `regions` | `regions` |
+| `releaseDates` | `release_dates` |
+| `releaseDateRegions` | `release_date_regions` |
+| `releaseDateStatuses` | `release_date_statuses` |
+| `reports` | `reports` |
+| `reportTypes` | `report_types` |
+| `screenshots` | `screenshots` |
+| `search` | `search` |
+| `themes` | `themes` |
+| `websites` | `websites` |
+| `websiteTypes` | `website_types` |
 
-**`findById(id: number)`** — fetches a single game by ID. Throws `IGDBNotFoundError` if not found.
+## Raw Endpoint Access
+
+For newly added IGDB endpoints or fields, use `client.endpoint(path)` or
+`client.request(path, query)` without waiting for model updates:
 
 ```ts
-const game = await client.games.findById(1942); // Hades
+const endpoint = client.endpoint("games");
+const games = await endpoint.request("fields name,platforms.name; limit 10;");
+
+const covers = await client.request("covers", "fields image_id,url; limit 10;");
+const total = await client.count("platforms", "");
+const fields = await client.meta("games");
+const protobuf = await client.requestProtobuf("games", "fields id,name;");
 ```
 
-**`search(term: string)`** — shorthand for `query().search(term).limit(50)`.
+## Multi-Query
 
 ```ts
-const results = await client.games.search("hollow knight");
+const results = await client.multiQuery(`
+query platforms/count "Count of Platforms" {
+};
+
+query games "Recent Games" {
+  fields name,first_release_date;
+  sort first_release_date desc;
+  limit 5;
+};
+`);
 ```
 
-> The `games` endpoint also supports `.count()` on its `QueryBuilder`.
-
----
-
-## client.genres
-
-Model: `Genre`
+## Webhooks
 
 ```ts
-interface Genre {
-  id: number;
-  name: string;
-  slug: string;
-}
-```
+await client.createWebhook("games", {
+  method: "create",
+  secret: "shared-secret",
+  url: "https://example.com/igdb-webhook",
+});
 
-### Methods
-
-**`query()`**, **`findMany()`** — same as games.
-
-```ts
-const genres = await client.genres.findMany().execute();
-```
-
----
-
-## client.platforms
-
-Model: `Platform`
-
-```ts
-interface Platform {
-  id: number;
-  name: string;
-  slug: string;
-  abbreviation: string;
-}
-```
-
-### Methods
-
-**`query()`**, **`findMany()`**
-
-```ts
-const ps5 = await client.platforms
-  .query()
-  .where((p) => p.slug.eq("ps5"))
-  .first();
-```
-
----
-
-## client.companies
-
-Model: `Company`
-
-```ts
-interface Company {
-  id: number;
-  name: string;
-  description: string;
-  country: number;
-  slug: string;
-}
-```
-
-### Methods
-
-**`query()`**, **`findMany()`**, **`search(term)`**
-
-```ts
-const fromJapan = await client.companies
-  .query()
-  .where((c) => c.country.eq(392)) // ISO 3166-1 numeric
-  .limit(20)
-  .execute();
-```
-
----
-
-## Related types
-
-```ts
-interface Cover {
-  id: number;
-  image_id: string;
-  width: number;
-  height: number;
-}
-
-interface InvolvedCompany {
-  id: number;
-  company: Company;
-  developer: boolean;
-  publisher: boolean;
-}
+const hooks = await client.listWebhooks();
+await client.testWebhook("games", hooks[0].id, 1942);
+await client.deleteWebhook(hooks[0].id);
 ```

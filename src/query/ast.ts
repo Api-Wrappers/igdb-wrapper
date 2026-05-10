@@ -7,13 +7,15 @@ export interface SortClause {
 
 export interface QueryAST {
 	fields: string[];
+	exclude: string[];
 	where: Condition[];
 	sort?: SortClause;
 	limit?: number;
 	offset?: number;
 	search?: string;
+	rawClauses: string[];
 }
 
 export function emptyAST(): QueryAST {
-	return { fields: [], where: [] };
+	return { exclude: [], fields: [], rawClauses: [], where: [] };
 }

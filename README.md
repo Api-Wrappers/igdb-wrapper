@@ -22,11 +22,14 @@ const games = await client.games
 
 ## Features
 
-- **Fully type-safe** — field selection and where conditions are inferred from your model types, with no stringly-typed field names
-- **Fluent query builder** — chainable `.select()`, `.where()`, `.sort()`, `.limit()`, `.offset()`, `.search()`
+- **All current IGDB v4 endpoints** — every endpoint listed in the official API docs is exposed on `IGDBClient`
+- **Fully type-safe** — field selection and where conditions are inferred from model types where available, with raw field helpers for new IGDB fields
+- **Fluent query builder** — chainable `.select()`, `.fields()`, `.exclude()`, `.where()`, `.whereRaw()`, `.sort()`, `.limit()`, `.offset()`, `.search()`
 - **Automatic retries** — exponential backoff on transient failures, configurable
 - **Rate limiting** — respects IGDB's concurrency limits out of the box
 - **Pagination** — async generator via `.paginate()`, plus `.count()` for UI pagination
+- **Multi-query and webhooks** — helpers for `/multiquery` and IGDB webhook management
+- **Reference helpers** — image URL and tag-number helpers, endpoint `/meta`, and protobuf response access
 - **Structured errors** — `IGDBAuthError`, `IGDBRateLimitError`, `IGDBNotFoundError`, `IGDBValidationError`
 
 ---
@@ -75,7 +78,7 @@ console.log(game?.name); // "Elden Ring"
 |---|---|
 | [Getting Started](./docs/getting-started.md) | Installation, credentials, and your first query |
 | [Querying](./docs/querying.md) | Full query builder API — select, where, sort, paginate |
-| [Endpoints](./docs/endpoints.md) | Games, Genres, Platforms, Companies |
+| [Endpoints](./docs/endpoints.md) | All IGDB v4 endpoint properties and raw endpoint access |
 | [Error Handling](./docs/error-handling.md) | All error types and how to handle them |
 | [Configuration](./docs/configuration.md) | Retry, rate limiting, and advanced options |
 | [API Reference](./docs/api-reference.md) | Complete method signatures |

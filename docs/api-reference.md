@@ -8,12 +8,24 @@ Complete signatures for all public APIs.
 
 ```ts
 class IGDBClient {
-  readonly games: GamesEndpoint;
-  readonly genres: GenresEndpoint;
-  readonly platforms: PlatformsEndpoint;
-  readonly companies: CompaniesEndpoint;
+  readonly games: IGDBEndpoint<Game>;
+  readonly genres: IGDBEndpoint<Genre>;
+  readonly platforms: IGDBEndpoint<Platform>;
+  readonly companies: IGDBEndpoint<Company>;
+  // ...plus every endpoint listed in docs/endpoints.md
 
   constructor(config: IGDBClientConfig);
+  endpoint<TModel extends IGDBEntity = IGDBAnyEntity>(path: string): IGDBEndpoint<TModel>;
+  request<T = IGDBAnyEntity>(endpoint: string, query: string): Promise<T[]>;
+  count(endpoint: string, query?: string): Promise<number>;
+  meta(endpoint: string): Promise<MetaField[]>;
+  requestProtobuf(endpoint: string, query: string): Promise<ArrayBuffer>;
+  multiQuery<T = IGDBAnyEntity>(query: string): Promise<Array<MultiQueryResult<T>>>;
+  createWebhook(endpoint: string, options: CreateWebhookOptions): Promise<Webhook>;
+  listWebhooks(): Promise<Webhook[]>;
+  getWebhook(id: number | string): Promise<Webhook>;
+  deleteWebhook(id: number | string): Promise<Webhook>;
+  testWebhook(endpoint: string, webhookId: number | string, entityId: number | string): Promise<unknown>;
   dispose(): Promise<void>;
 }
 
@@ -47,6 +59,8 @@ class QueryBuilder<TModel, TShape = TModel> {
   select<TNewShape extends Record<string, unknown>>(
     selector: (proxy: SelectProxy<TModel>) => TNewShape
   ): QueryBuilder<TModel, TNewShape>;
+  fields(...fields: string[]): QueryBuilder<TModel, TShape>;
+  exclude(...fields: string[]): QueryBuilder<TModel, TShape>;
 
   // Filtering
   where(
@@ -55,6 +69,7 @@ class QueryBuilder<TModel, TShape = TModel> {
       helpers: WhereHelpers
     ) => Condition | Condition[]
   ): QueryBuilder<TModel, TShape>;
+  whereRaw(condition: string): QueryBuilder<TModel, TShape>;
 
   // Sorting
   sort(
@@ -68,6 +83,7 @@ class QueryBuilder<TModel, TShape = TModel> {
 
   // Full-text search
   search(term: string): QueryBuilder<TModel, TShape>;
+  apicalypse(clause: string): QueryBuilder<TModel, TShape>;
 
   // Execution
   execute(): Promise<TShape[]>;
@@ -93,6 +109,7 @@ Passed as the second argument to `.where()` callbacks.
 interface WhereHelpers {
   or(...conditions: Condition[]): Condition;
   and(...conditions: Condition[]): Condition;
+  raw(expression: string): Condition;
 }
 ```
 
@@ -111,51 +128,44 @@ interface ConditionBuilder<T> {
   lt(value: T): Condition;
   lte(value: T): Condition;
   in(values: T[]): Condition;
+  notIn(values: T[]): Condition;
   contains(value: T): Condition;
+  containsAll(values: T[]): Condition;
+  excludesAll(values: T[]): Condition;
+  exact(values: T[]): Condition;
+  isNull(): Condition;
+  notNull(): Condition;
+  startsWith(value: string, options?: TextMatchOptions): Condition;
+  endsWith(value: string, options?: TextMatchOptions): Condition;
+  containsText(value: string, options?: TextMatchOptions): Condition;
 }
 ```
 
 ---
 
-## Endpoint classes
+## Endpoint class
 
-### GamesEndpoint
+All client endpoint properties use the same class.
 
 ```ts
-class GamesEndpoint {
-  query(): QueryBuilder<Game>;
-  findMany(): QueryBuilder<Game>;           // query().limit(50)
-  findById(id: number): Promise<Game>;      // throws IGDBNotFoundError if missing
-  search(term: string): QueryBuilder<Game>; // query().search(term).limit(50)
+class IGDBEndpoint<TModel extends IGDBEntity = IGDBEntity> {
+  readonly path: string;
+  query(): QueryBuilder<TModel>;
+  findMany(): QueryBuilder<TModel>;
+  findById(id: number): Promise<TModel>;
+  search(term: string): QueryBuilder<TModel>;
+  request<TShape = TModel>(query: string): Promise<TShape[]>;
+  count(query?: string): Promise<number>;
+  meta(): Promise<MetaField[]>;
+  requestProtobuf(query: string): Promise<ArrayBuffer>;
 }
 ```
 
-### GenresEndpoint
+## Reference Helpers
 
 ```ts
-class GenresEndpoint {
-  query(): QueryBuilder<Genre>;
-  findMany(): QueryBuilder<Genre>;
-}
-```
-
-### PlatformsEndpoint
-
-```ts
-class PlatformsEndpoint {
-  query(): QueryBuilder<Platform>;
-  findMany(): QueryBuilder<Platform>;
-}
-```
-
-### CompaniesEndpoint
-
-```ts
-class CompaniesEndpoint {
-  query(): QueryBuilder<Company>;
-  findMany(): QueryBuilder<Company>;
-  search(term: string): QueryBuilder<Company>;
-}
+buildImageUrl("image_id", { size: "cover_big", retina: true });
+createTagNumber("genre", 5);
 ```
 
 ---
@@ -198,60 +208,9 @@ interface RateLimitPluginOptions {
 
 ## Models
 
-```ts
-interface Game {
-  id: number;
-  name: string;
-  slug: string;
-  summary: string;
-  storyline: string;
-  rating: number;
-  rating_count: number;
-  aggregated_rating: number;
-  aggregated_rating_count: number;
-  first_release_date: number;
-  cover: Cover;
-  genres: Genre[];
-  platforms: Platform[];
-  involved_companies: InvolvedCompany[];
-  similar_games: Game[];
-  url: string;
-  status: number;
-  category: number;
-}
+All endpoint model types are exported from the package root, including `Game`,
+`Artwork`, `AgeRating`, `CompanyWebsite`, `PopularityPrimitive`, `Webhook`, and
+the shared base types `IGDBEntity`, `NamedEntity`, and `ImageEntity`.
 
-interface Cover {
-  id: number;
-  image_id: string;
-  width: number;
-  height: number;
-}
-
-interface Genre {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-interface Platform {
-  id: number;
-  name: string;
-  slug: string;
-  abbreviation: string;
-}
-
-interface Company {
-  id: number;
-  name: string;
-  description: string;
-  country: number;
-  slug: string;
-}
-
-interface InvolvedCompany {
-  id: number;
-  company: Company;
-  developer: boolean;
-  publisher: boolean;
-}
-```
+Model fields are optional except for core identifiers and a few established
+fields, because IGDB only returns fields requested by the APICalypse body.

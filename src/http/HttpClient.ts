@@ -46,16 +46,8 @@ interface IGDBCountResponse {
 
 export class HttpClient {
 	readonly #client: ReturnType<typeof createClient>;
-	readonly #auth: AuthManager;
-	readonly #clientId: string;
-	readonly #fetch: typeof globalThis.fetch;
-	readonly #timeoutMs: number | undefined;
 
 	constructor(options: HttpClientOptions) {
-		this.#auth = options.auth;
-		this.#clientId = options.clientId;
-		this.#fetch = options.fetch ?? globalThis.fetch;
-		this.#timeoutMs = options.timeoutMs;
 		this.#client = createClient({
 			baseUrl: IGDB_BASE,
 			defaultHeaders: {
@@ -95,38 +87,18 @@ export class HttpClient {
 
 	async requestProtobuf(endpoint: string, body: string): Promise<ArrayBuffer> {
 		const normalized = normalizeEndpoint(endpoint).replace(/\.pb$/, "");
-		const url = `${IGDB_BASE}/${normalized}.pb`;
-		const token = await this.#auth.getAccessToken();
-		const controller =
-			this.#timeoutMs === undefined ? null : new AbortController();
-		const timeout =
-			controller === null
-				? undefined
-				: setTimeout(() => controller.abort(), this.#timeoutMs);
 
 		try {
-			const response = await this.#fetch(url, {
+			return await this.#client.request<ArrayBuffer>(`/${normalized}.pb`, {
 				body,
 				headers: {
 					accept: "application/octet-stream",
-					authorization: `Bearer ${token}`,
-					"client-id": this.#clientId,
-					"content-type": "text/plain",
 				},
 				method: "POST",
-				signal: controller?.signal,
+				responseType: "arrayBuffer",
 			});
-
-			if (!response.ok) {
-				throw await toIGDBResponseError(response, `${normalized}.pb`);
-			}
-
-			return response.arrayBuffer();
 		} catch (error) {
-			if (error instanceof IGDBError) throw error;
 			throw toIGDBError(error, `${normalized}.pb`);
-		} finally {
-			if (timeout) clearTimeout(timeout);
 		}
 	}
 
@@ -181,32 +153,6 @@ export class HttpClient {
 
 function normalizeEndpoint(endpoint: string): string {
 	return endpoint.replace(/^\/+/, "").replace(/\/+$/, "");
-}
-
-async function toIGDBResponseError(
-	response: Response,
-	endpoint: string,
-): Promise<IGDBError> {
-	const body = await response.text().catch(() => "");
-
-	if (response.status === 401) {
-		return new IGDBAuthError("Unauthorized - check your client credentials");
-	}
-
-	if (response.status === 429) {
-		return new IGDBRateLimitError(readRetryAfterMs(response));
-	}
-
-	return new IGDBError(`HTTP ${response.status} on /${endpoint}: ${body}`);
-}
-
-function readRetryAfterMs(response: Response): number | undefined {
-	const raw = response.headers.get("retry-after");
-	if (!raw) return undefined;
-	const seconds = Number(raw);
-	if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
-	const date = Date.parse(raw);
-	return Number.isNaN(date) ? undefined : Math.max(0, date - Date.now());
 }
 
 function toIGDBError(error: unknown, endpoint: string): IGDBError {

@@ -189,6 +189,7 @@ describe("IGDBClient", () => {
 
 	test("supports meta and protobuf requests", async () => {
 		const protobufBytes = new Uint8Array([8, 1, 18, 4]);
+		const coreRequestUrls: string[] = [];
 		const fetchMock = (async (input, init) => {
 			const url = String(input);
 
@@ -210,6 +211,7 @@ describe("IGDBClient", () => {
 				expect(init?.method).toBe("POST");
 				expect(headers.get("accept")).toBe("application/octet-stream");
 				expect(headers.get("authorization")).toBe("Bearer access-token");
+				expect(headers.get("x-core-request")).toBe("yes");
 				expect(init?.body).toBe("fields id,name; limit 1;");
 				return new Response(protobufBytes, {
 					headers: { "content-type": "application/octet-stream" },
@@ -219,7 +221,25 @@ describe("IGDBClient", () => {
 			throw new Error(`Unexpected request: ${url}`);
 		}) as typeof fetch;
 
-		const client = new IGDBClient({ ...testConfig, fetch: fetchMock });
+		const client = new IGDBClient({
+			...testConfig,
+			fetch: fetchMock,
+			plugins: [
+				{
+					name: "protobuf-core-probe",
+					beforeRequest(ctx) {
+						if (ctx.url.endsWith(".pb")) {
+							coreRequestUrls.push(ctx.url);
+							return {
+								...ctx,
+								headers: { ...ctx.headers, "x-core-request": "yes" },
+							};
+						}
+						return ctx;
+					},
+				},
+			],
+		});
 
 		await expect(client.games.meta()).resolves.toEqual([
 			{ name: "name", type: "String" },
@@ -230,6 +250,7 @@ describe("IGDBClient", () => {
 		await client.dispose();
 
 		expect([...bytes]).toEqual([...protobufBytes]);
+		expect(coreRequestUrls).toEqual(["https://api.igdb.com/v4/games.pb"]);
 	});
 
 	test("builds IGDB image URLs and tag numbers from documented formulas", () => {

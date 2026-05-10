@@ -1,5 +1,11 @@
 # @api-wrappers/igdb-wrapper
 
+## 0.6.1
+
+### Patch Changes
+
+- Route protobuf requests through api-core so plugins, retries, timeouts, and shared transport behaviour apply consistently.
+
 ## 0.6.0
 
 ### Minor Changes

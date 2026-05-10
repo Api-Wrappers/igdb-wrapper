@@ -1,6 +1,6 @@
 {
 	"name": "@api-wrappers/igdb-wrapper",
-	"version": "0.6.0",
+	"version": "0.6.1",
 	"description": "Type-safe TypeScript client for the IGDB API with a fluent query builder, automatic retries, and built-in rate limiting",
 	"module": "./dist/index.mjs",
 	"type": "module",
@@ -69,6 +69,6 @@
 		"typescript": "^5"
 	},
 	"dependencies": {
-		"@api-wrappers/api-core": "^0.0.2"
+		"@api-wrappers/api-core": "^0.0.3"
 	}
 }

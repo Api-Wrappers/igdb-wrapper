@@ -1,6 +1,6 @@
 {
 	"name": "@api-wrappers/igdb-wrapper",
-	"version": "0.6.1",
+	"version": "1.0.0",
 	"description": "Type-safe TypeScript client for the IGDB API with a fluent query builder, automatic retries, and built-in rate limiting",
 	"module": "./dist/index.mjs",
 	"type": "module",
@@ -18,7 +18,9 @@
 	},
 	"files": [
 		"dist",
+		"docs",
 		"README.md",
+		"CHANGELOG.md",
 		"LICENSE"
 	],
 	"sideEffects": false,
@@ -30,7 +32,7 @@
 		"changeset": "changeset",
 		"version-packages": "changeset version",
 		"release": "changeset publish",
-		"prepublishOnly": "npm run typecheck && npm run build"
+		"prepublishOnly": "npm run typecheck && npm run test && npm run build"
 	},
 	"keywords": [
 		"igdb",

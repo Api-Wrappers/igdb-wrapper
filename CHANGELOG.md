@@ -1,5 +1,11 @@
 # @api-wrappers/igdb-wrapper
 
+## 1.0.0
+
+### Major Changes
+
+- Promote the IGDB wrapper to V1 with the full current IGDB v4 endpoint surface, typed APICalypse query building, multi-query, webhooks, metadata, protobuf, retry, rate-limit, image URL, and tag-number support.
+
 ## 0.6.1
 
 ### Patch Changes

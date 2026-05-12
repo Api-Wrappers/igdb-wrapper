@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { IGDBClient } from "../client/IGDBClient";
+import {
+	IGDB_ENDPOINTS,
+	IGDB_SEARCHABLE_ENDPOINTS,
+} from "../endpoints/registry";
 import { IGDBRateLimitError } from "../errors";
 import { buildImageUrl, createTagNumber } from "../index";
 
@@ -129,6 +133,26 @@ describe("IGDBClient", () => {
 			url: "https://api.igdb.com/v4/artworks",
 			body: "fields image_id,game.name;\nlimit 2;",
 		});
+	});
+
+	test("exposes every registered IGDB endpoint as a client property", async () => {
+		const client = new IGDBClient({
+			...testConfig,
+			fetch: (async () => new Response()) as unknown as typeof fetch,
+		});
+
+		for (const [property, path] of Object.entries(IGDB_ENDPOINTS)) {
+			expect(
+				(client as unknown as Record<string, { path: string }>)[property]
+					?.path,
+			).toBe(path);
+		}
+
+		for (const path of IGDB_SEARCHABLE_ENDPOINTS) {
+			expect(Object.values(IGDB_ENDPOINTS)).toContain(path);
+		}
+
+		await client.dispose();
 	});
 
 	test("compiles documented APICalypse features", () => {

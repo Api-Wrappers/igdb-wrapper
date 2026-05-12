@@ -2,8 +2,8 @@
 
 [![npm version](https://img.shields.io/npm/v/@api-wrappers/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@api-wrappers/igdb-wrapper)
 [![npm downloads](https://img.shields.io/npm/dm/@api-wrappers/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@api-wrappers/igdb-wrapper)
-[![license](https://img.shields.io/github/license/TDanks2000/igdb-wrapper?color=green)](https://github.com/TDanks2000/igdb-wrapper/blob/main/LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/TDanks2000/igdb-wrapper/ci.yml?branch=main)](https://github.com/TDanks2000/igdb-wrapper/actions)
+[![license](https://img.shields.io/github/license/Api-Wrappers/igdb-wrapper?color=green)](https://github.com/Api-Wrappers/igdb-wrapper/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/Api-Wrappers/igdb-wrapper/ci.yml?branch=main)](https://github.com/Api-Wrappers/igdb-wrapper/actions)
 
 A type-safe TypeScript client for the [IGDB API](https://api.igdb.com) with a fluent
 query builder, automatic retries, and built-in rate limiting.
@@ -87,7 +87,7 @@ console.log(game?.name); // "Elden Ring"
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/api-wrappers/igdb-wrapper/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/Api-Wrappers/igdb-wrapper/blob/main/LICENSE) file for details.
 
 <br/>
 

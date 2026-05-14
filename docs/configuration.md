@@ -4,6 +4,8 @@
 `clientSecret` are required. HTTP execution is powered by
 `@api-wrappers/api-core`.
 
+The default configuration is intended to be production-safe for normal IGDB usage. Reach for these options when you need stricter timeouts, custom fetch behavior, additional api-core plugins, or different retry/rate-limit behavior.
+
 ```ts
 interface IGDBClientConfig {
   clientId: string;
@@ -108,6 +110,31 @@ The wrapper forwards these api-core options to the IGDB HTTP client:
 - `plugins` appends additional api-core plugins after the built-in rate limit
   and auth plugins.
 - `logger` controls api-core diagnostic logging.
+
+### Custom fetch
+
+Pass `fetch` when you need to run through a custom HTTP stack, add test doubles, or use a runtime-specific implementation. The same function is used for Twitch token requests and IGDB API requests.
+
+```ts
+const client = new IGDBClient({
+  clientId: "...",
+  clientSecret: "...",
+  fetch: async (input, init) => {
+    console.log("IGDB request:", input);
+    return fetch(input, init);
+  },
+});
+```
+
+### Timeouts
+
+```ts
+const client = new IGDBClient({
+  clientId: "...",
+  clientSecret: "...",
+  timeoutMs: 10_000,
+});
+```
 
 ---
 

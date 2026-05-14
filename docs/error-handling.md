@@ -2,6 +2,8 @@
 
 igdb-wrapper uses a structured error hierarchy so you can handle failures precisely without parsing error messages.
 
+Most application code should handle the errors users can recover from (`IGDBNotFoundError`, `IGDBAuthError`, and exhausted `IGDBRateLimitError`) and rethrow validation or unknown errors.
+
 ---
 
 ## Error types
@@ -33,6 +35,18 @@ try {
 }
 ```
 
+For scripts, put `client.dispose()` in `finally` so cleanup still runs when a request fails:
+
+```ts
+const client = new IGDBClient(config);
+
+try {
+  await client.games.findById(1942);
+} finally {
+  await client.dispose();
+}
+```
+
 ---
 
 ### IGDBAuthError
@@ -43,7 +57,7 @@ Thrown when the API returns a `401 Unauthorized` response. This usually means yo
 import { IGDBAuthError } from "@api-wrappers/igdb-wrapper";
 
 if (err instanceof IGDBAuthError) {
-  console.error("Authentication failed — check your credentials");
+  console.error("Authentication failed. Check your credentials");
 }
 ```
 
@@ -89,13 +103,13 @@ if (err instanceof IGDBNotFoundError) {
 
 ### IGDBValidationError
 
-Thrown when you pass invalid arguments to the query builder — for example, a `limit()` value outside `1–500`.
+Thrown when you pass invalid arguments to the query builder. For example, a `limit()` value outside `1` to `500`.
 
 ```ts
 import { IGDBValidationError } from "@api-wrappers/igdb-wrapper";
 
 if (err instanceof IGDBValidationError) {
-  // Fix the query — this is a programming error, not a runtime one
+  // Fix the query. This is a programming error, not a runtime one.
   console.error("Invalid query:", err.message);
 }
 ```
@@ -122,20 +136,20 @@ try {
   const game = await client.games.findById(9999999);
 } catch (err) {
   if (err instanceof IGDBNotFoundError) {
-    // Expected — handle gracefully
+    // Expected. Handle gracefully.
     console.log("Game not found");
   } else if (err instanceof IGDBAuthError) {
     // Likely a misconfiguration
-    console.error("Bad credentials — check environment variables");
+    console.error("Bad credentials. Check environment variables");
     process.exit(1);
   } else if (err instanceof IGDBRateLimitError) {
-    // Retries exhausted — back off at the application level
+    // Retries exhausted. Back off at the application level.
     console.warn(`Still rate limited after retries. Wait ${err.retryAfterMs}ms`);
   } else if (err instanceof IGDBValidationError) {
-    // Programming error — fix the query
+    // Programming error. Fix the query.
     throw err;
   } else {
-    // Unknown error — re-throw
+    // Unknown error. Re-throw.
     throw err;
   }
 }

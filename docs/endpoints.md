@@ -19,6 +19,21 @@ method uniformly so new searchable endpoints do not require a wrapper release;
 the current documented searchable endpoints are exported as
 `IGDB_SEARCHABLE_ENDPOINTS`.
 
+Use endpoint properties for known IGDB resources:
+
+```ts
+await client.games.query().limit(10).execute();
+await client.platforms.findById(48);
+await client.companies.search("Nintendo").execute();
+```
+
+Use `client.endpoint(path)` when IGDB adds a new endpoint before the wrapper publishes typed model support:
+
+```ts
+const experimental = client.endpoint("new_endpoint");
+const rows = await experimental.request("fields *; limit 10;");
+```
+
 ## Endpoint Properties
 
 | Client property | IGDB path |
@@ -117,7 +132,11 @@ const fields = await client.meta("games");
 const protobuf = await client.requestProtobuf("games", "fields id,name;");
 ```
 
+`endpoint.request(query)` and `client.request(path, query)` expect a complete APICalypse body. Query-builder methods generate that body for you.
+
 ## Multi-Query
+
+Multi-query sends one body to `/multiquery` and returns an array of named result blocks. Blocks can contain either `result` rows or a `count`.
 
 ```ts
 const results = await client.multiQuery(`
@@ -133,6 +152,8 @@ query games "Recent Games" {
 ```
 
 ## Webhooks
+
+Webhook helpers wrap IGDB's webhook endpoints. Store webhook secrets outside your source code and validate incoming webhook payloads in your app.
 
 ```ts
 await client.createWebhook("games", {

@@ -1,6 +1,8 @@
 # Querying
 
-Every endpoint exposes a `.query()` method that returns a `QueryBuilder`. The builder is **immutable** — each method returns a new instance, so you can safely branch queries.
+Every endpoint exposes a `.query()` method that returns a `QueryBuilder`. The builder compiles to an IGDB APICalypse request body.
+
+The builder is **immutable**: each method returns a new instance, so you can safely branch queries.
 
 ```ts
 const base = client.games.query().where((g) => g.rating.gte(80));
@@ -14,7 +16,7 @@ const popular = base.sort((g) => g.rating_count, "desc").limit(10);
 
 ## select()
 
-Specify which fields to fetch. The proxy argument is fully typed — your editor will autocomplete every field and nested relation.
+Specify which fields to fetch. The proxy argument is fully typed, so your editor can autocomplete model fields and nested relations.
 
 ```ts
 const games = await client.games
@@ -28,7 +30,23 @@ const games = await client.games
   }))
   .execute();
 
-// games[0].cover.imageId — fully typed, no `any`
+// games[0].cover.imageId is fully typed, no `any`
+```
+
+The object keys become the TypeScript result shape. The proxy values become IGDB field paths. That means you can rename fields for app code while still requesting the correct IGDB field:
+
+```ts
+const games = await client.games
+  .query()
+  .select((g) => ({
+    title: g.name,
+    releaseDate: g.first_release_date,
+  }))
+  .limit(5)
+  .execute();
+
+// games[0].title
+// games[0].releaseDate
 ```
 
 **Fetching all fields on a relation** with `.$all`:
@@ -61,6 +79,29 @@ const games = await client.games
 
 `exclude()` compiles to IGDB's `exclude` clause and is commonly paired with
 `fields *`.
+
+---
+
+## Choosing between select(), fields(), and request()
+
+Use the highest-level API that still lets you express the query clearly.
+
+| Use this | When |
+|---|---|
+| `.select()` | You want typed output and editor autocomplete |
+| `.fields()` | You know the IGDB field path or the model is missing a new field |
+| `.whereRaw()` | Only the filter expression needs raw APICalypse |
+| `.apicalypse()` | You need to append a raw APICalypse clause |
+| `.request()` | You already have a complete APICalypse body |
+
+```ts
+await client.games.request(`
+fields name,cover.image_id;
+where rating > 90;
+sort rating desc;
+limit 10;
+`);
+```
 
 ---
 
@@ -108,7 +149,7 @@ Calling `.where()` multiple times chains conditions with `AND`:
 ```ts
 .where((g) => g.rating.gte(80))
 .where((g) => g.rating_count.gte(100))
-// → where rating >= 80 & rating_count >= 100
+// where rating >= 80 & rating_count >= 100
 ```
 
 You can also return an array from a single `.where()`:
@@ -119,10 +160,18 @@ You can also return an array from a single `.where()`:
 
 ### OR conditions
 
-Use the `or` helper from the second argument — no imports needed:
+Use the `or` helper from the second argument. No imports needed:
 
 ```ts
 .where((g, { or }) => or(g.rating.gte(90), g.aggregated_rating.gte(90)))
+```
+
+The helper wraps the expression in parentheses, so it composes cleanly with other `.where()` calls:
+
+```ts
+.where((g) => g.rating_count.gte(100))
+.where((g, { or }) => or(g.rating.gte(90), g.aggregated_rating.gte(90)))
+// where rating_count >= 100 & (rating >= 90 | aggregated_rating >= 90)
 ```
 
 ### AND grouping
@@ -174,7 +223,7 @@ The default direction is `"asc"`.
 ## limit() and offset()
 
 ```ts
-.limit(20)    // 1–500, throws IGDBValidationError outside this range
+.limit(20)    // 1 to 500, throws IGDBValidationError outside this range
 .offset(40)   // >= 0
 ```
 
@@ -186,12 +235,13 @@ Full-text search via IGDB's search endpoint. Can be combined with `.where()` to 
 
 ```ts
 const results = await client.games
-  .query()
   .search("zelda")
   .where((g) => g.rating.gte(70))
   .limit(10)
   .execute();
 ```
+
+`client.games.search("zelda")` starts from the games endpoint and applies `search "zelda"; limit 50;`. Use `.query().search("zelda")` when you do not want that default limit.
 
 ---
 
@@ -224,7 +274,7 @@ Like `first()`, but throws `IGDBNotFoundError` instead of returning `null`.
 const game = await client.games
   .query()
   .where((g) => g.slug.eq("elden-ring"))
-  .firstOrThrow("games"); // Game — never null
+  .firstOrThrow("games"); // Game, never null
 ```
 
 ### count()
@@ -249,6 +299,8 @@ for await (const page of client.games.query().paginate(20)) {
   }
 }
 ```
+
+If you only need one UI page, use `limit()` and `offset()`. Use `paginate()` for background syncs, exports, and import jobs.
 
 ---
 

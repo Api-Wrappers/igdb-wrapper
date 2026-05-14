@@ -47,10 +47,10 @@ interface IGDBClientConfig {
 ## QueryBuilder\<TModel, TShape\>
 
 The `QueryBuilder` is generic over two type parameters:
-- `TModel` — the source model (e.g. `Game`)
-- `TShape` — the output shape after `.select()` (defaults to `TModel`)
+- `TModel` - the source model (e.g. `Game`)
+- `TShape` - the output shape after `.select()` (defaults to `TModel`)
 
-All methods return a new `QueryBuilder` instance — the original is never mutated.
+All methods return a new `QueryBuilder` instance. The original is never mutated.
 
 ```ts
 class QueryBuilder<TModel, TShape = TModel> {
@@ -78,7 +78,7 @@ class QueryBuilder<TModel, TShape = TModel> {
   ): QueryBuilder<TModel, TShape>;
 
   // Pagination
-  limit(n: number): QueryBuilder<TModel, TShape>;    // 1–500
+  limit(n: number): QueryBuilder<TModel, TShape>;    // 1 to 500
   offset(n: number): QueryBuilder<TModel, TShape>;   // >= 0
 
   // Full-text search
@@ -158,14 +158,20 @@ class IGDBEndpoint<TModel extends IGDBEntity = IGDBEntity> {
   count(query?: string): Promise<number>;
   meta(): Promise<MetaField[]>;
   requestProtobuf(query: string): Promise<ArrayBuffer>;
+  firstOrThrow(query: string): Promise<TModel>;
 }
 ```
 
 ## Reference Helpers
 
 ```ts
-buildImageUrl("image_id", { size: "cover_big", retina: true });
-createTagNumber("genre", 5);
+const coverUrl = buildImageUrl("image_id", {
+  size: "cover_big",
+  retina: true,
+  extension: "webp",
+});
+
+const tag = createTagNumber("genre", 5);
 ```
 
 ---

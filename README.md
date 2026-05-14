@@ -5,32 +5,56 @@
 [![license](https://img.shields.io/github/license/Api-Wrappers/igdb-wrapper?color=green)](https://github.com/Api-Wrappers/igdb-wrapper/blob/main/LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/Api-Wrappers/igdb-wrapper/ci.yml?branch=main)](https://github.com/Api-Wrappers/igdb-wrapper/actions)
 
-A type-safe TypeScript client for the [IGDB API](https://api.igdb.com) with a fluent
-query builder, automatic retries, and built-in rate limiting.
+A type-safe TypeScript client for the [IGDB API](https://api.igdb.com) with a fluent query builder, automatic OAuth token handling, retries, and IGDB-friendly rate limiting.
+
+The package is built for the way IGDB is normally used: start with a typed query, shape the fields you want, drop to raw APICalypse only when you need to, and keep your app code readable.
 
 ```ts
+import { IGDBClient, buildImageUrl } from "@api-wrappers/igdb-wrapper";
+
+const client = new IGDBClient({
+  clientId: process.env.TWITCH_CLIENT_ID!,
+  clientSecret: process.env.TWITCH_CLIENT_SECRET!,
+});
+
 const games = await client.games
   .query()
-  .select((g) => ({ name: g.name, rating: g.rating }))
-  .where((g, { or }) => or(g.rating.gte(90), g.aggregated_rating.gte(90)))
-  .sort((g) => g.rating, "desc")
-  .limit(10)
+  .select((game) => ({
+    id: game.id,
+    name: game.name,
+    rating: game.rating,
+    cover: {
+      imageId: game.cover.image_id,
+    },
+  }))
+  .where((game, { or }) =>
+    or(game.rating.gte(90), game.aggregated_rating.gte(90)),
+  )
+  .sort((game) => game.rating, "desc")
+  .limit(5)
   .execute();
+
+for (const game of games) {
+  const coverUrl = game.cover?.imageId
+    ? buildImageUrl(game.cover.imageId, { size: "cover_big", retina: true })
+    : null;
+
+  console.log(game.name, game.rating, coverUrl);
+}
 ```
 
 ---
 
-## Features
+## Why use it?
 
-- **All current IGDB v4 endpoints** — every endpoint listed in the official API docs is exposed on `IGDBClient`
-- **Fully type-safe** — field selection and where conditions are inferred from model types where available, with raw field helpers for new IGDB fields
-- **Fluent query builder** — chainable `.select()`, `.fields()`, `.exclude()`, `.where()`, `.whereRaw()`, `.sort()`, `.limit()`, `.offset()`, `.search()`
-- **Automatic retries** — exponential backoff on transient failures, configurable
-- **Rate limiting** — respects IGDB's concurrency limits out of the box
-- **Pagination** — async generator via `.paginate()`, plus `.count()` for UI pagination
-- **Multi-query and webhooks** — helpers for `/multiquery` and IGDB webhook management
-- **Reference helpers** — image URL and tag-number helpers, endpoint `/meta`, and protobuf response access
-- **Structured errors** — `IGDBAuthError`, `IGDBRateLimitError`, `IGDBNotFoundError`, `IGDBValidationError`
+- **Typed field selection** with editor autocomplete for model fields and nested relations.
+- **Readable filters** through `.where()`, `or()`, `and()`, and typed comparison helpers.
+- **Raw APICalypse escape hatches** with `.fields()`, `.whereRaw()`, `.apicalypse()`, and `endpoint.request()`.
+- **Every registered IGDB v4 endpoint** exposed as a camel-cased `IGDBClient` property.
+- **Pagination helpers** with `.count()` and async-generator `.paginate()`.
+- **Automatic auth, retry, and rate limiting** through `@api-wrappers/api-core`.
+- **Useful extras** for image URLs, tag numbers, `/meta`, protobuf, multi-query, and webhooks.
+- **Structured errors** so app code can handle auth, validation, rate limit, and not-found cases directly.
 
 ---
 
@@ -52,7 +76,12 @@ bun add @api-wrappers/igdb-wrapper
 
 ## Quick Start
 
-You'll need a [Twitch Developer application](https://dev.twitch.tv/console/apps) to obtain a `client_id` and `client_secret`.
+IGDB uses Twitch application credentials. Create an app in the [Twitch Developer Console](https://dev.twitch.tv/console/apps), then set:
+
+```bash
+TWITCH_CLIENT_ID=your_client_id
+TWITCH_CLIENT_SECRET=your_client_secret
+```
 
 ```ts
 import { IGDBClient } from "@api-wrappers/igdb-wrapper";
@@ -64,10 +93,82 @@ const client = new IGDBClient({
 
 const game = await client.games
   .query()
-  .where((g) => g.slug.eq("elden-ring"))
+  .select((game) => ({
+    name: game.name,
+    summary: game.summary,
+    releaseDate: game.first_release_date,
+  }))
+  .where((game) => game.slug.eq("elden-ring"))
   .first();
 
-console.log(game?.name); // "Elden Ring"
+console.log(game?.name);
+```
+
+---
+
+## Common Recipes
+
+### Search games
+
+```ts
+const results = await client.games
+  .search("zelda")
+  .select((game) => ({
+    name: game.name,
+    slug: game.slug,
+    rating: game.rating,
+  }))
+  .where((game) => game.rating.gte(70))
+  .limit(10)
+  .execute();
+```
+
+### Build a paginated list
+
+```ts
+const pageSize = 20;
+const page = 2;
+
+const query = client.games
+  .query()
+  .select((game) => ({ name: game.name, rating: game.rating }))
+  .where((game) => game.rating_count.gte(100))
+  .sort((game) => game.rating, "desc");
+
+const [items, total] = await Promise.all([
+  query.limit(pageSize).offset(page * pageSize).execute(),
+  query.count(),
+]);
+```
+
+### Use raw IGDB syntax when needed
+
+```ts
+const games = await client.games
+  .query()
+  .fields("name", "platforms.name", "cover.image_id")
+  .whereRaw("platforms = {48,6}")
+  .apicalypse("limit 10;")
+  .execute();
+```
+
+### Fetch a cover URL
+
+```ts
+import { buildImageUrl } from "@api-wrappers/igdb-wrapper";
+
+const game = await client.games
+  .query()
+  .select((game) => ({
+    name: game.name,
+    cover: { imageId: game.cover.image_id },
+  }))
+  .where((game) => game.slug.eq("hades"))
+  .first();
+
+const coverUrl = game?.cover?.imageId
+  ? buildImageUrl(game.cover.imageId, { size: "cover_big", retina: true })
+  : null;
 ```
 
 ---
@@ -77,11 +178,14 @@ console.log(game?.name); // "Elden Ring"
 | Guide | Description |
 |---|---|
 | [Getting Started](./docs/getting-started.md) | Installation, credentials, and your first query |
-| [Querying](./docs/querying.md) | Full query builder API — select, where, sort, paginate |
+| [Querying](./docs/querying.md) | Full query builder API: select, where, sort, paginate |
+| [Examples](./docs/examples.md) | Copyable recipes for search, pagination, images, raw requests, and webhooks |
 | [Endpoints](./docs/endpoints.md) | All IGDB v4 endpoint properties and raw endpoint access |
 | [Error Handling](./docs/error-handling.md) | All error types and how to handle them |
 | [Configuration](./docs/configuration.md) | Retry, rate limiting, and advanced options |
 | [API Reference](./docs/api-reference.md) | Complete method signatures |
+
+Example source files are also available in [`examples/`](./examples).
 
 ---
 

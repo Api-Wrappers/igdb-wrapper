@@ -19,6 +19,7 @@
 	"files": [
 		"dist",
 		"docs",
+		"examples",
 		"README.md",
 		"CHANGELOG.md",
 		"LICENSE"

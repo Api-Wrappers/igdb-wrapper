@@ -4,12 +4,11 @@
 [![npm downloads](https://img.shields.io/npm/dm/@api-wrappers/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@api-wrappers/igdb-wrapper)
 [![license](https://img.shields.io/github/license/Api-Wrappers/igdb-wrapper?color=green)](https://github.com/Api-Wrappers/igdb-wrapper/blob/main/LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/Api-Wrappers/igdb-wrapper/ci.yml?branch=main)](https://github.com/Api-Wrappers/igdb-wrapper/actions)
+![GitHub Repo stars](https://img.shields.io/github/stars/api-wrappers/igdb-wrapper)
 
 A type-safe TypeScript client for the [IGDB API](https://api.igdb.com) with a fluent query builder, automatic OAuth token handling, retries, and IGDB-friendly rate limiting.
 
 The package is built for the way IGDB is normally used: start with a typed query, shape the fields you want, drop to raw APICalypse only when you need to, and keep your app code readable.
-
-If this package saves you time, [star the repo](https://github.com/Api-Wrappers/igdb-wrapper) to help other IGDB developers find it.
 
 ```ts
 import { IGDBClient, buildImageUrl } from "@api-wrappers/igdb-wrapper";

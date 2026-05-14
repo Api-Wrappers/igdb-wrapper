@@ -1,12 +1,16 @@
-# igdb-wrapper
+<h1 align="center">@api-wrappers/igdb-wrapper</h1>
 
-[![npm version](https://img.shields.io/npm/v/@api-wrappers/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@api-wrappers/igdb-wrapper)
-[![npm downloads](https://img.shields.io/npm/dm/@api-wrappers/igdb-wrapper?color=blue&logo=npm)](https://www.npmjs.com/package/@api-wrappers/igdb-wrapper)
-[![license](https://img.shields.io/github/license/Api-Wrappers/igdb-wrapper?color=green)](https://github.com/Api-Wrappers/igdb-wrapper/blob/main/LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/Api-Wrappers/igdb-wrapper/ci.yml?branch=main)](https://github.com/Api-Wrappers/igdb-wrapper/actions)
-![GitHub Repo stars](https://img.shields.io/github/stars/api-wrappers/igdb-wrapper)
+<p align="center">
+  A type-safe TypeScript client for the <a href="https://api.igdb.com">IGDB API</a>.
+</p>
 
-A type-safe TypeScript client for the [IGDB API](https://api.igdb.com) with a fluent query builder, automatic OAuth token handling, retries, and IGDB-friendly rate limiting.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@api-wrappers/igdb-wrapper"><img alt="npm version" src="https://img.shields.io/npm/v/@api-wrappers/igdb-wrapper"></a>
+  <a href="https://www.npmjs.com/package/@api-wrappers/igdb-wrapper"><img alt="npm downloads" src="https://img.shields.io/npm/dm/@api-wrappers/igdb-wrapper"></a>
+  <a href="https://github.com/Api-Wrappers/igdb-wrapper/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/@api-wrappers/igdb-wrapper"></a>
+  <a href="https://github.com/Api-Wrappers/igdb-wrapper/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Api-Wrappers/igdb-wrapper/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/Api-Wrappers/igdb-wrapper/stargazers"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/api-wrappers/igdb-wrapper"></a>
+</p>
 
 The package is built for the way IGDB is normally used: start with a typed query, shape the fields you want, drop to raw APICalypse only when you need to, and keep your app code readable.
 

@@ -1,5 +1,13 @@
 # @api-wrappers/igdb-wrapper
 
+## 1.0.1
+
+### Patch Changes
+
+- Update the shared runtime dependency to `@api-wrappers/api-core@^1.0.1`.
+- Broaden the TypeScript peer dependency range to support TypeScript 6.
+- Add clearer repository discovery guidance to the README.
+
 ## 1.0.0
 
 ### Major Changes

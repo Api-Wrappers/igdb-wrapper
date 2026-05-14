@@ -9,6 +9,8 @@ A type-safe TypeScript client for the [IGDB API](https://api.igdb.com) with a fl
 
 The package is built for the way IGDB is normally used: start with a typed query, shape the fields you want, drop to raw APICalypse only when you need to, and keep your app code readable.
 
+If this package saves you time, [star the repo](https://github.com/Api-Wrappers/igdb-wrapper) to help other IGDB developers find it.
+
 ```ts
 import { IGDBClient, buildImageUrl } from "@api-wrappers/igdb-wrapper";
 

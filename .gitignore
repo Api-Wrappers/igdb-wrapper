@@ -6,6 +6,9 @@ out
 dist
 *.tgz
 
+# local maintainer drafts
+docs/issue-drafts.md
+
 # code coverage
 coverage
 *.lcov

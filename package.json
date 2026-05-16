@@ -1,7 +1,7 @@
 {
 	"name": "@api-wrappers/igdb-wrapper",
 	"version": "1.0.1",
-	"description": "Type-safe TypeScript client for the IGDB API with a fluent query builder, automatic retries, and built-in rate limiting",
+	"description": "Type-safe IGDB client with a fluent APICalypse query builder, endpoint helpers, auth, retries, and rate limiting",
 	"module": "./dist/index.mjs",
 	"type": "module",
 	"main": "./dist/index.cjs",
@@ -30,10 +30,12 @@
 		"build": "tsdown --config tsdown.config.mjs --config-loader native",
 		"test": "bun test",
 		"typecheck": "tsc --noEmit",
+		"check": "bun run typecheck && bun run test && bun run build",
+		"verify": "bun run check && npm pack --dry-run",
 		"changeset": "changeset",
 		"version-packages": "changeset version",
 		"release": "changeset publish",
-		"prepublishOnly": "npm run typecheck && npm run test && npm run build"
+		"prepublishOnly": "bun run check"
 	},
 	"keywords": [
 		"igdb",
@@ -42,10 +44,14 @@
 		"api-wrapper",
 		"games",
 		"game-api",
+		"game-database",
 		"typescript",
 		"type-safe",
 		"query-builder",
+		"fluent-query-builder",
+		"apicalypse",
 		"twitch",
+		"twitch-api",
 		"nodejs",
 		"bun"
 	],

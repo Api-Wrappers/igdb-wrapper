@@ -1,0 +1,41 @@
+name: Docs request
+description: Request clearer examples, reference docs, or migration guidance
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Documentation area
+      options:
+        - README
+        - Getting started
+        - Query builder
+        - Examples
+        - Endpoint helpers
+        - Error handling
+        - Configuration
+        - Release readiness
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: What should be clearer?
+      description: Include the exact topic, method, or example you were looking for.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested example or wording
+      description: Optional, but helpful.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I am not asking to document unsupported query-builder syntax as if it exists.
+          required: true

@@ -38,6 +38,99 @@ const games = await client.games
 
 ---
 
+## Get a game by ID
+
+Use `findById()` when you already have the IGDB ID. It returns the first
+matching game or throws `IGDBNotFoundError`.
+
+```ts
+const game = await client.games.findById(1942);
+
+console.log(game.name);
+```
+
+---
+
+## Select fields for an app view
+
+Use `select()` to keep IGDB field paths typed while shaping the result for your
+application. The object keys become the returned TypeScript shape.
+
+```ts
+const games = await client.games
+  .query()
+  .select((game) => ({
+    id: game.id,
+    title: game.name,
+    summary: game.summary,
+    releaseDate: game.first_release_date,
+    cover: {
+      imageId: game.cover.image_id,
+    },
+  }))
+  .limit(12)
+  .execute();
+
+for (const game of games) {
+  console.log(game.title, game.releaseDate);
+}
+```
+
+---
+
+## Filter by rating, date, and platform
+
+APICalypse can express dense filters, but the typed helpers make common
+comparisons easier to maintain.
+
+```ts
+const games = await client.games
+  .query()
+  .select((game) => ({
+    name: game.name,
+    rating: game.rating,
+    releaseDate: game.first_release_date,
+  }))
+  .where((game) => [
+    game.rating.gte(80),
+    game.first_release_date.gte(1672531200),
+    game.platforms.containsAll([48, 6]),
+  ])
+  .limit(20)
+  .execute();
+```
+
+Use `whereRaw()` when the exact IGDB expression is clearer than a typed helper:
+
+```ts
+const consoleGames = await client.games
+  .query()
+  .fields("name", "platforms.name")
+  .whereRaw("platforms = {48,6}")
+  .limit(10)
+  .execute();
+```
+
+---
+
+## Sort results
+
+```ts
+const topRated = await client.games
+  .query()
+  .select((game) => ({
+    name: game.name,
+    rating: game.rating,
+    ratingCount: game.rating_count,
+  }))
+  .where((game) => game.rating_count.gte(100))
+  .sort((game) => game.rating, "desc")
+  .limit(10)
+  .execute();
+```
+
+---
+
 ## Render cover images
 
 IGDB returns image IDs. Use `buildImageUrl()` to produce a CDN URL.
@@ -151,7 +244,7 @@ for (const field of fields) {
 
 ## Multi-query
 
-Multi-query is useful when a screen needs several unrelated datasets in one IGDB request.
+Multi-query is useful when a screen needs several unrelated datasets in one IGDB request. This wrapper exposes IGDB's raw multi-query body through `client.multiQuery()`; a typed multi-query builder is not available yet.
 
 ```ts
 const response = await client.multiQuery(`

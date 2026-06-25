@@ -76,29 +76,22 @@ jobs:
           done
           echo "has_changesets=${HAS_CHANGESETS}" >> "$GITHUB_OUTPUT"
 
-      - name: Create version PR or publish (changesets)
-        id: changesets
-        if: github.ref == 'refs/heads/main' && (steps.release_state.outputs.package_published != 'true' || steps.release_state.outputs.has_changesets == 'true')
+      - name: Create version PR (changesets)
+        if: steps.release_state.outputs.has_changesets == 'true'
         uses: changesets/action@v1
         with:
           version: bun run changeset version
-          publish: npm publish --access public --provenance
           createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish to npm (release branch)
-        id: npm_publish
-        if: startsWith(github.ref, 'refs/heads/release/') && steps.release_state.outputs.package_published != 'true'
+      - name: Publish to npm
+        id: publish
+        if: steps.release_state.outputs.package_published != 'true' && steps.release_state.outputs.has_changesets != 'true'
         run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Generate release notes
-        id: notes
-        if: steps.release_state.outputs.exists != 'true' && (steps.changesets.outcome == 'success' || steps.npm_publish.outcome == 'success')
+        if: steps.release_state.outputs.exists != 'true' && steps.publish.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}
@@ -112,7 +105,7 @@ jobs:
           fi
 
       - name: Create GitHub release
-        if: steps.release_state.outputs.exists != 'true' && (steps.changesets.outcome == 'success' || steps.npm_publish.outcome == 'success')
+        if: steps.release_state.outputs.exists != 'true' && steps.publish.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}

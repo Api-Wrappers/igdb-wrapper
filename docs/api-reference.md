@@ -20,7 +20,8 @@ class IGDBClient {
   count(endpoint: string, query?: string): Promise<number>;
   meta(endpoint: string): Promise<MetaField[]>;
   requestProtobuf(endpoint: string, query: string): Promise<ArrayBuffer>;
-  multiQuery<T = IGDBAnyEntity>(query: string): Promise<Array<MultiQueryResult<T>>>;
+  multiQuery<T = IGDBAnyEntity>(query: string | MultiQueryBuilder): Promise<Array<MultiQueryResult<T>>>;
+  multiQueryBuilder(): MultiQueryBuilder;
   createWebhook(endpoint: string, options: CreateWebhookOptions): Promise<Webhook>;
   listWebhooks(): Promise<Webhook[]>;
   getWebhook(id: number | string): Promise<Webhook>;
@@ -94,8 +95,54 @@ class QueryBuilder<TModel, TShape = TModel> {
 
   // Debug
   raw(): string;
+  inspect(): QueryDebugInfo;
+  toJSON(): QueryDebugInfo;
   debug(): this;
   explain(): this;
+}
+```
+
+```ts
+interface QueryDebugInfo {
+  ast: QueryAST;
+  query: string;
+}
+```
+
+---
+
+## MultiQueryBuilder
+
+```ts
+class MultiQueryBuilder {
+  query<TModel extends IGDBEntity>(
+    endpoint: IGDBEndpoint<TModel>,
+    name: string,
+    build: (query: QueryBuilder<TModel>) => QueryBuilder<TModel, unknown>
+  ): MultiQueryBuilder;
+  query<TModel extends IGDBEntity = IGDBEntity>(
+    endpoint: string,
+    name: string,
+    build: (query: QueryBuilder<TModel>) => QueryBuilder<TModel, unknown>
+  ): MultiQueryBuilder;
+  count<TModel extends IGDBEntity>(
+    endpoint: IGDBEndpoint<TModel>,
+    name: string,
+    build?: (query: QueryBuilder<TModel>) => QueryBuilder<TModel, unknown>
+  ): MultiQueryBuilder;
+  count<TModel extends IGDBEntity = IGDBEntity>(
+    endpoint: string,
+    name: string,
+    build?: (query: QueryBuilder<TModel>) => QueryBuilder<TModel, unknown>
+  ): MultiQueryBuilder;
+  raw(): string;
+  inspect(): MultiQueryDebugInfo;
+  toJSON(): MultiQueryDebugInfo;
+}
+
+interface MultiQueryDebugInfo {
+  blocks: MultiQueryBlock[];
+  query: string;
 }
 ```
 

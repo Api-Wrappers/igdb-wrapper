@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Wrapper Improvements Audit</title>
+  <meta name="strategist-type" content="audit">
+  <meta name="strategist-slug" content="api-wrapper-improvements">
+  <meta name="strategist-created" content="2026-06-25">
+  <meta name="strategist-status" content="ready">
+  <meta name="strategist-target" content="TypeScript IGDB wrapper reliability, ergonomics, endpoint metadata, docs, and release validation">
+  <style>
+    body { margin: 0; font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: #f7f8fb; }
+    main { max-width: 980px; margin: 0 auto; padding: 40px 20px 64px; }
+    h1, h2, h3 { line-height: 1.2; color: #0f172a; }
+    h1 { margin: 0 0 16px; font-size: 2rem; }
+    h2 { margin-top: 34px; border-top: 1px solid #d8dee9; padding-top: 22px; }
+    h3 { margin-top: 24px; }
+    code { background: #edf1f7; padding: 0.1rem 0.25rem; border-radius: 4px; }
+    pre { background: #111827; color: #f8fafc; padding: 16px; border-radius: 8px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { border: 1px solid #d8dee9; padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #edf1f7; }
+    .callout { background: #fff; border: 1px solid #d8dee9; border-left: 4px solid #2563eb; padding: 14px 16px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>API Wrapper Improvements Audit</h1>
+
+    <section id="tldr" aria-labelledby="tldr-heading">
+      <h2 id="tldr-heading">TL;DR</h2>
+      <p class="callout">The wrapper is already in a good baseline state: strict TypeScript is enabled, the public client covers the current endpoint registry, and <code>bun run typecheck</code>, <code>bun test</code>, and <code>bun run build</code> pass. Improve it incrementally, not with a rewrite. The highest-value next task is hardening runtime reliability and drift control: single-flight Twitch token refresh, endpoint metadata generation/validation, typed multi-query ergonomics, stronger error/debug behavior, and package smoke coverage.</p>
+    </section>
+
+    <section id="goal" aria-labelledby="goal-heading">
+      <h2 id="goal-heading">1. Goal</h2>
+      <p>Improve <code>@api-wrappers/igdb-wrapper</code> as a production API wrapper while preserving its main promise: typed APICalypse query construction, full raw IGDB escape hatches, and a small dependency footprint.</p>
+    </section>
+
+    <section id="codebase-understanding" aria-labelledby="understanding-heading">
+      <h2 id="understanding-heading">2. Codebase Understanding</h2>
+      <ul>
+        <li><strong>Stack:</strong> TypeScript ESM/CJS library, Bun tests, tsdown build, strict <code>tsconfig.json</code>, Node &gt;= 18, shared runtime via <code>@api-wrappers/api-core</code>.</li>
+        <li><strong>Core runtime:</strong> <code>src/client/IGDBClient.ts:23</code> owns public endpoint properties and high-level helpers. <code>src/http/HttpClient.ts:29</code> wraps api-core with IGDB base URL, auth, retry, rate-limit, and error conversion. <code>src/auth/AuthManager.ts:27</code> fetches and caches Twitch client-credentials tokens.</li>
+        <li><strong>Query builder:</strong> <code>src/query/QueryBuilder.ts:19</code>, <code>src/query/compiler.ts:3</code>, <code>src/query/fieldProxy.ts:18</code>, and <code>src/query/operators.ts:24</code> provide immutable fluent query construction with typed proxies.</li>
+        <li><strong>Endpoint coverage:</strong> <code>src/endpoints/registry.ts:1</code> maps camel-cased client keys to IGDB endpoint paths. <code>src/client/IGDBClient.ts:23</code> manually mirrors that registry as class properties and constructor assignments.</li>
+        <li><strong>Docs and roadmap:</strong> <code>README.md</code>, <code>docs/</code>, and <code>ROADMAP.md</code> already position the package well and track examples, typed multi-query, docs snippet tests, package smoke tests, and release readiness.</li>
+        <li><strong>Test baseline:</strong> <code>src/__tests__/igdb-client.test.ts:17</code> covers auth request shape, token caching after sequential calls, endpoint exposure, query compilation, raw multi-query, meta/protobuf, utilities, webhooks, and rate-limit error mapping.</li>
+      </ul>
+      <p>Validation run during this audit: <code>bun run typecheck</code> passed, <code>bun test</code> passed with 10 tests, and <code>bun run build</code> passed.</p>
+    </section>
+
+    <section id="findings" aria-labelledby="findings-heading">
+      <h2 id="findings-heading">Findings by Priority</h2>
+
+      <h3>High: Concurrent token refresh can stampede Twitch auth</h3>
+      <p><strong>Evidence:</strong> <code>AuthManager.getAccessToken()</code> returns the cached token when valid but calls <code>#refresh()</code> directly when the cache is absent or stale (<code>src/auth/AuthManager.ts:46</code>). There is no in-flight refresh promise. The test suite only proves sequential cache reuse (<code>src/__tests__/igdb-client.test.ts:70</code>).</p>
+      <p><strong>Why it matters:</strong> A server process that starts several IGDB requests at once can make multiple identical Twitch token calls before the first one populates <code>#cache</code>. That burns rate budget and increases cold-start latency.</p>
+      <p><strong>Recommended fix:</strong> Add single-flight refresh behavior inside <code>AuthManager</code>. Store an in-flight <code>Promise&lt;string&gt; | null</code>, reuse it while pending, clear it in <code>finally</code>, and preserve current error mapping.</p>
+
+      <h3>High: Endpoint properties duplicate registry data manually</h3>
+      <p><strong>Evidence:</strong> <code>IGDB_ENDPOINTS</code> is the canonical map (<code>src/endpoints/registry.ts:1</code>), but <code>IGDBClient</code> manually declares and assigns every endpoint (<code>src/client/IGDBClient.ts:23</code> through <code>src/client/IGDBClient.ts:262</code>). The test verifies parity at runtime (<code>src/__tests__/igdb-client.test.ts:138</code>) but does not remove the maintenance burden.</p>
+      <p><strong>Why it matters:</strong> Adding or renaming endpoints requires changing registry, client property declarations, constructor assignments, docs, and tests. The current shape is usable but drift-prone as IGDB changes.</p>
+      <p><strong>Recommended fix:</strong> Introduce a generated endpoint surface or a typed endpoint map helper. Keep existing named properties for backward compatibility, but move the source of truth into structured metadata that can generate or validate the public property declarations.</p>
+
+      <h3>Medium: Raw multi-query is the biggest remaining string-heavy API</h3>
+      <p><strong>Evidence:</strong> <code>client.multiQuery()</code> accepts a raw body string (<code>src/client/IGDBClient.ts:293</code>). The README and roadmap explicitly say typed multi-query is not implemented yet.</p>
+      <p><strong>Why it matters:</strong> Multi-query is valuable for real apps because it combines search/detail/count requests, but the wrapper currently loses its type-safety advantage at that boundary.</p>
+      <p><strong>Recommended fix:</strong> Add a minimal typed multi-query builder that reuses <code>QueryBuilder.raw()</code> output rather than reimplementing APICalypse. Start with named result entries and count entries. Keep raw <code>multiQuery(string)</code> unchanged.</p>
+
+      <h3>Medium: Query debug helpers always write to console</h3>
+      <p><strong>Evidence:</strong> <code>QueryBuilder.debug()</code> and <code>QueryBuilder.explain()</code> call <code>console.log</code> directly (<code>src/query/QueryBuilder.ts:128</code> and <code>src/query/QueryBuilder.ts:133</code>), while the client runtime accepts an injected logger in config (<code>src/client/config.ts:12</code>).</p>
+      <p><strong>Why it matters:</strong> Library code should avoid unconditional console output. It can leak query contents into logs and is harder for application owners to route or suppress.</p>
+      <p><strong>Recommended fix:</strong> Prefer non-printing introspection methods as the stable API: <code>raw()</code> already exists; add <code>inspect()</code> or <code>toJSON()</code> for AST-style inspection. Mark console-printing helpers as debug-only in docs or route them through an optional logger if the builder can receive one without broad API churn.</p>
+
+      <h3>Medium: Error mapping needs broader contract tests</h3>
+      <p><strong>Evidence:</strong> <code>HttpClient.toIGDBError()</code> maps api-core errors to IGDB-specific errors, including 401 and rate limits. The tests cover rate-limit mapping only (<code>src/__tests__/igdb-client.test.ts:361</code>) and docs describe auth/not-found/validation patterns.</p>
+      <p><strong>Why it matters:</strong> Error shapes are part of the public API. Regressions here force users to parse messages or catch generic errors.</p>
+      <p><strong>Recommended fix:</strong> Add focused tests for 401 to <code>IGDBAuthError</code>, non-JSON response bodies, plugin-error unwrapping, failed Twitch token fetch, validation errors for limit/offset/paginate/empty fields, and <code>findById()</code> not-found behavior.</p>
+
+      <h3>Low: Release validation is close but not complete</h3>
+      <p><strong>Evidence:</strong> <code>package.json</code> has <code>verify</code> running <code>bun run check &amp;&amp; npm pack --dry-run</code>. The roadmap tracks package-content smoke tests, and <code>package.json</code> exports point to <code>dist/index.mjs</code>, <code>dist/index.cjs</code>, and <code>dist/index.d.mts</code>.</p>
+      <p><strong>Why it matters:</strong> A build can pass while the published tarball has broken CJS/ESM import behavior, missing docs, or unusable declarations.</p>
+      <p><strong>Recommended fix:</strong> Add a package smoke test that packs locally, installs or imports the tarball in a temp fixture, checks both ESM and CJS entrypoints, and typechecks a small consumer snippet.</p>
+    </section>
+
+    <section id="recommendation" aria-labelledby="recommendation-heading">
+      <h2 id="recommendation-heading">3. Recommendation</h2>
+      <p>Do this now, but split it into two execution tasks. First harden reliability and release trust because those reduce user-visible risk without changing the public API. Second improve ergonomics with a typed multi-query builder and endpoint metadata generation. Do not rewrite the HTTP layer or replace <code>@api-wrappers/api-core</code>; the current runtime boundary is clean enough.</p>
+    </section>
+
+    <section id="scope" aria-labelledby="scope-heading">
+      <h2 id="scope-heading">4. Scope</h2>
+      <h3>In Scope</h3>
+      <ul>
+        <li>Single-flight token refresh in <code>AuthManager</code>.</li>
+        <li>Endpoint metadata/source-of-truth cleanup that preserves current public client properties.</li>
+        <li>Minimal typed multi-query builder that composes existing <code>QueryBuilder</code> output.</li>
+        <li>Safer debug/introspection behavior for queries.</li>
+        <li>Expanded tests for auth, error mapping, validation, endpoint drift, multi-query, and package smoke behavior.</li>
+        <li>Docs updates for any public API additions or changed debug guidance.</li>
+      </ul>
+      <h3>Out of Scope</h3>
+      <ul>
+        <li>Removing raw APICalypse escape hatches.</li>
+        <li>Replacing <code>@api-wrappers/api-core</code>.</li>
+        <li>Changing package name, module format, or minimum Node version.</li>
+        <li>Browser-side OAuth flows; Twitch client secrets should stay server-side.</li>
+        <li>Large generated model redesign unless endpoint metadata work proves it is necessary.</li>
+      </ul>
+    </section>
+
+    <section id="files-to-inspect" aria-labelledby="files-heading">
+      <h2 id="files-heading">5. Files and Areas to Inspect</h2>
+      <ul>
+        <li><code>src/auth/AuthManager.ts</code></li>
+        <li><code>src/http/HttpClient.ts</code></li>
+        <li><code>src/client/IGDBClient.ts</code></li>
+        <li><code>src/client/config.ts</code></li>
+        <li><code>src/endpoints/registry.ts</code> and <code>src/endpoints/Endpoint.ts</code></li>
+        <li><code>src/query/QueryBuilder.ts</code>, <code>src/query/compiler.ts</code>, <code>src/query/ast.ts</code>, <code>src/query/helpers.ts</code>, <code>src/query/operators.ts</code>, and <code>src/query/fieldProxy.ts</code></li>
+        <li><code>src/types/models.ts</code>, <code>src/types/query.types.ts</code>, and <code>src/types/response.types.ts</code></li>
+        <li><code>src/__tests__/igdb-client.test.ts</code></li>
+        <li><code>README.md</code>, <code>ROADMAP.md</code>, and <code>docs/</code></li>
+        <li><code>package.json</code>, <code>tsdown.config.mjs</code>, <code>tsconfig.json</code>, and CI config if present.</li>
+      </ul>
+    </section>
+
+    <section id="implementation-plan" aria-labelledby="implementation-heading">
+      <h2 id="implementation-heading">6. Implementation Plan</h2>
+      <ol>
+        <li><strong>Add single-flight token refresh.</strong> In <code>AuthManager</code>, add a private in-flight refresh promise. Update <code>getAccessToken()</code> so concurrent callers share one refresh, then clear the promise in <code>finally</code>. Add a test that fires multiple concurrent IGDB requests against an empty cache and asserts exactly one Twitch token request.</li>
+        <li><strong>Expand error and validation tests.</strong> Add focused tests for 401 mapping, failed token fetch mapping, non-JSON/non-object response body formatting, validation failures, and <code>findById()</code> not-found behavior. Keep test fetch mocks local and deterministic.</li>
+        <li><strong>Create endpoint metadata as the single source of truth.</strong> Introduce metadata that binds the public key, endpoint path, model type name, and searchability. Use it to derive <code>IGDB_ENDPOINTS</code> and searchable paths. Preserve all existing exports and properties. If code generation is used, keep the generated output committed and add a check that fails on drift.</li>
+        <li><strong>Reduce manual endpoint-client drift.</strong> Either generate the declarations/assignments in <code>IGDBClient</code> from endpoint metadata or add a type-level/runtime drift test that ensures every metadata row has a client property and docs entry. Do not remove existing named properties.</li>
+        <li><strong>Add a typed multi-query builder.</strong> Build a small API around existing endpoint/query objects, for example named query entries and named count entries that compile to IGDB multi-query syntax. Reuse <code>QueryBuilder.raw()</code> bodies. Keep <code>client.multiQuery(rawString)</code> intact.</li>
+        <li><strong>Improve query introspection.</strong> Add a non-printing introspection method or document <code>raw()</code> as the preferred debug path. If keeping <code>debug()</code>/<code>explain()</code>, make their console behavior explicit and test their output lightly or route through configurable logging only if it can be done without contaminating query-builder construction.</li>
+        <li><strong>Add package smoke validation.</strong> Add a script or test that runs after build, packs the package, verifies expected files, imports ESM, requires CJS, and typechecks a minimal consumer snippet. Wire it into <code>verify</code> if it is fast and reliable.</li>
+        <li><strong>Update docs and roadmap.</strong> Update README/docs for single-flight behavior only if externally relevant, typed multi-query usage, debug guidance, and release validation. Mark completed roadmap items rather than duplicating them.</li>
+      </ol>
+    </section>
+
+    <section id="code-quality-rules" aria-labelledby="quality-heading">
+      <h2 id="quality-heading">7. Code Quality Rules</h2>
+      <ul>
+        <li>Follow existing TypeScript style, strictness, and public export patterns.</li>
+        <li>Keep changes incremental and backward compatible.</li>
+        <li>Do not use <code>any</code> or weaken public types.</li>
+        <li>Reuse <code>QueryBuilder</code>, <code>IGDBEndpoint</code>, and existing query compiler primitives before creating new abstractions.</li>
+        <li>Avoid new runtime dependencies unless the package smoke workflow cannot be done cleanly with Bun/Node built-ins.</li>
+        <li>Do not remove raw request methods; they are part of the package's compatibility story.</li>
+      </ul>
+    </section>
+
+    <section id="validation" aria-labelledby="validation-heading">
+      <h2 id="validation-heading">8. Testing and Validation</h2>
+      <ul>
+        <li><code>bun run typecheck</code></li>
+        <li><code>bun test</code></li>
+        <li><code>bun run build</code></li>
+        <li><code>npm pack --dry-run</code></li>
+        <li>New package smoke script, if added.</li>
+        <li>Targeted test for concurrent auth refresh with multiple simultaneous requests.</li>
+        <li>Targeted test for typed multi-query output and response typing.</li>
+      </ul>
+    </section>
+
+    <section id="acceptance-criteria" aria-labelledby="acceptance-heading">
+      <h2 id="acceptance-heading">9. Acceptance Criteria</h2>
+      <ul>
+        <li>Concurrent cold-start requests share one Twitch token refresh.</li>
+        <li>Existing public API remains source-compatible for current README examples.</li>
+        <li>Endpoint metadata has one clear source of truth and tests catch registry/client/searchability drift.</li>
+        <li>Typed multi-query supports at least named list queries and named count queries while raw multi-query remains available.</li>
+        <li>Error mapping and validation behavior are covered by focused tests.</li>
+        <li>Package smoke validation proves ESM, CJS, and declarations work from the built package.</li>
+        <li><code>bun run typecheck</code>, <code>bun test</code>, <code>bun run build</code>, and package verification pass.</li>
+      </ul>
+    </section>
+
+    <section id="risks" aria-labelledby="risks-heading">
+      <h2 id="risks-heading">10. Risks and Notes</h2>
+      <ul>
+        <li><strong>Public API compatibility:</strong> Endpoint metadata cleanup must not remove named properties or change existing endpoint paths.</li>
+        <li><strong>Type complexity:</strong> Typed multi-query can become over-engineered quickly. Ship the smallest useful typed builder and keep raw escape hatches.</li>
+        <li><strong>Generated code drift:</strong> If generation is introduced, add a check script. Generation without CI validation makes drift worse, not better.</li>
+        <li><strong>Secrets:</strong> Do not add docs or tests that encourage exposing Twitch client secrets in browser code.</li>
+        <li><strong>Build artifacts:</strong> Running <code>bun run build</code> rewrites <code>dist/</code>. Keep source changes and generated build output separated if committing.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

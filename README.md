@@ -104,13 +104,14 @@ const games = await client.games
 ## Why use it?
 
 - **Typed query builder:** select fields, compose filters, sort, limit, offset,
-  inspect the generated APICalypse with `.raw()`, and keep the returned shape
-  typed.
+  inspect the generated APICalypse with `.raw()` / `.inspect()`, and keep the
+  returned shape typed.
 - **Endpoint helpers:** every registered IGDB v4 endpoint is exposed as a
   camel-cased `IGDBClient` property with `.query()`, `.findById()`,
   `.search()`, `.request()`, `.count()`, `.meta()`, and protobuf helpers.
-- **Auth:** Twitch client credentials are exchanged and cached for IGDB
-  requests.
+- **Auth:** Twitch client credentials are exchanged, cached, and refreshed with
+  single-flight concurrency so parallel cold-start requests share one token
+  fetch.
 - **Retries:** transient failures are retried through `@api-wrappers/api-core`.
 - **Rate limiting:** the default limiter matches IGDB's documented request and
   concurrency limits.
@@ -133,7 +134,8 @@ const games = await client.games
   `.query()`, `.findMany()`, `.findById()`, `.search()`, `.request()`,
   `.count()`, `.meta()`, and `.requestProtobuf()`.
 - Client-level helpers cover custom endpoint access, raw requests, counts,
-  metadata, protobuf responses, raw multi-query bodies, and webhooks.
+  metadata, protobuf responses, raw or builder-based multi-query bodies, and
+  webhooks.
 - Utility exports include IGDB image URL building and tag-number creation.
 
 See [Endpoints](./docs/endpoints.md) and [API Reference](./docs/api-reference.md)
@@ -236,8 +238,21 @@ const coverUrl = game.cover?.imageId
 
 ### Send a multi-query request
 
-`multiQuery()` currently accepts IGDB's raw multi-query body. A typed
-multi-query builder is tracked in the roadmap.
+Use `multiQueryBuilder()` when each block can be expressed with the normal
+query builder. It compiles through the same `.raw()` path as regular queries:
+
+```ts
+const query = client
+  .multiQueryBuilder()
+  .query(client.games, "Top Games", (games) =>
+    games.fields("name", "rating").sort((game) => game.rating, "desc").limit(5),
+  )
+  .count(client.platforms, "Platform Count");
+
+const response = await client.multiQuery(query);
+```
+
+Raw IGDB multi-query bodies remain supported for full APICalypse compatibility:
 
 ```ts
 const response = await client.multiQuery(`

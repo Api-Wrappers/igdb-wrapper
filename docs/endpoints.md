@@ -19,6 +19,10 @@ method uniformly so new searchable endpoints do not require a wrapper release;
 the current documented searchable endpoints are exported as
 `IGDB_SEARCHABLE_ENDPOINTS`.
 
+Endpoint properties and path exports are derived from
+`IGDB_ENDPOINT_METADATA`, which is exported for tooling that needs the wrapper's
+registered endpoint list without constructing a client.
+
 Use endpoint properties for known IGDB resources:
 
 ```ts

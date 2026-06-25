@@ -2,12 +2,15 @@ export type { IGDBClientConfig } from "./client/config";
 export { IGDBClient } from "./client/IGDBClient";
 export type {
 	CreateWebhookOptions,
+	IGDBClientEndpoints,
+	IGDBEndpointModelMap,
 	MultiQueryResult,
 	WebhookMethod,
 } from "./client/IGDBClient";
 export { IGDBEndpoint } from "./endpoints/Endpoint";
 export {
 	IGDB_ENDPOINTS,
+	IGDB_ENDPOINT_METADATA,
 	IGDB_SEARCHABLE_ENDPOINTS,
 } from "./endpoints/registry";
 export type {
@@ -23,6 +26,12 @@ export {
 	IGDBValidationError,
 } from "./errors";
 export { QueryBuilder } from "./query/QueryBuilder";
+export { MultiQueryBuilder } from "./query/MultiQueryBuilder";
+export type {
+	MultiQueryBlock,
+	MultiQueryDebugInfo,
+} from "./query/MultiQueryBuilder";
+export type { QueryDebugInfo } from "./query/QueryBuilder";
 export type * from "./types/models";
 export type {
 	Condition,

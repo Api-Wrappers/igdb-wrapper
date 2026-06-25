@@ -9,11 +9,13 @@ raw IGDB access when needed.
 - Typed query builder for field selection, filters, sorting, limits, offsets,
   counts, and async pagination.
 - Endpoint helpers for registered IGDB v4 endpoints.
-- Twitch credential auth with token caching.
+- Metadata-driven endpoint helpers for registered IGDB v4 endpoints.
+- Twitch credential auth with token caching and single-flight refresh.
 - Retry, timeout, plugin, and rate-limit behavior through
   `@api-wrappers/api-core`.
 - Structured errors for auth, rate limit, not found, and validation cases.
-- Image URL, tag number, meta, protobuf, webhook, and raw multi-query helpers.
+- Image URL, tag number, meta, protobuf, webhook, raw multi-query, and typed
+  multi-query builder helpers.
 
 ## Near Term
 
@@ -22,28 +24,26 @@ raw IGDB access when needed.
 - Improve generated model docs so users can discover IGDB fields without
   opening source files.
 - Add tests that assert README and docs snippets compile where practical.
-- Add package-content smoke tests for the published tarball.
 - Expand endpoint docs with the searchable endpoints and common field sets.
 
 ## Query Builder Ergonomics
 
-- Explore a typed multi-query builder. `client.multiQuery()` currently accepts
-  IGDB's raw multi-query body, which is accurate but still string-based.
+- Expand the typed multi-query builder with more result-shape examples while
+  keeping raw `client.multiQuery()` bodies supported.
 - Improve relation-array result typing for `select()` examples that fetch nested
   arrays such as `platforms.name` or `genres.name`.
 - Consider clearer helpers for IGDB array/set expressions so fewer examples need
   `whereRaw()`.
 - Add date helper recipes for converting JavaScript `Date` values to IGDB Unix
   timestamps.
-- Add optional query snippet tooling that prints the generated APICalypse for
-  docs and debugging.
+- Add optional query snippet tooling that captures generated APICalypse for
+  docs from `.inspect()` payloads.
 
 ## Reliability and Trust
 
 - Keep CI running typecheck, tests, build, and package smoke checks.
 - Maintain a release-readiness checklist for every release.
-- Add more structured error tests around HTTP status handling and retry
-  exhaustion.
+- Add more structured error tests around retry exhaustion.
 - Document supported runtimes and compatibility expectations.
 
 ## Not Planned Right Now

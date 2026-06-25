@@ -12,7 +12,13 @@ import type {
 	RetryConfig,
 } from "@api-wrappers/api-core";
 import type { AuthManager } from "../auth/AuthManager";
-import { IGDBAuthError, IGDBError, IGDBRateLimitError } from "../errors";
+import {
+	IGDBAuthError,
+	IGDBError,
+	IGDBNotFoundError,
+	IGDBRateLimitError,
+	IGDBValidationError,
+} from "../errors";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
 
@@ -166,6 +172,20 @@ function toIGDBError(error: unknown, endpoint: string): IGDBError {
 	if (cause instanceof ApiError) {
 		if (cause.status === 401) {
 			return new IGDBAuthError("Unauthorized - check your client credentials");
+		}
+
+		if (cause.status === 400) {
+			return new IGDBValidationError(
+				`Invalid request on /${endpoint}: ${formatBody(cause.responseBody)}`,
+			);
+		}
+
+		if (cause.status === 404) {
+			return new IGDBNotFoundError(endpoint);
+		}
+
+		if (cause.status === 429) {
+			return new IGDBRateLimitError();
 		}
 
 		return new IGDBError(

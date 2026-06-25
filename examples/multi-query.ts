@@ -3,16 +3,14 @@ import { createClient } from "./client";
 const client = createClient();
 
 try {
-	const response = await client.multiQuery(`
-query games "Top Games" {
-  fields name,rating;
-  sort rating desc;
-  limit 5;
-};
+	const query = client
+		.multiQueryBuilder()
+		.query(client.games, "Top Games", (games) =>
+			games.fields("name", "rating").sort((game) => game.rating, "desc").limit(5),
+		)
+		.count(client.platforms, "Platform Count");
 
-query platforms/count "Platform Count" {
-};
-`);
+	const response = await client.multiQuery(query);
 
 	for (const entry of response) {
 		if (entry.count !== undefined) {

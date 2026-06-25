@@ -306,12 +306,14 @@ If you only need one UI page, use `limit()` and `offset()`. Use `paginate()` for
 
 ## Debug helpers
 
-These methods are for development only and return `this` so you can keep chaining.
+`raw()` and `inspect()` are side-effect free. `debug()` and `explain()` log and
+return `this` so you can keep chaining.
 
 ```ts
-builder.debug()    // logs the internal AST as JSON
-builder.explain()  // logs the compiled IGDB query string
 builder.raw()      // returns the compiled query string
+builder.inspect()  // returns { ast, query }
+builder.debug()    // logs the structured inspect() payload
+builder.explain()  // logs the compiled IGDB query string
 ```
 
 Use `.apicalypse("...")` to append a raw APICalypse clause after the generated
@@ -331,4 +333,38 @@ client.games
 // fields *;
 // where rating >= 90;
 // sort rating desc;
+```
+
+---
+
+## Multi-query builder
+
+`client.multiQueryBuilder()` builds IGDB multi-query bodies from regular
+`QueryBuilder` blocks. Pass endpoint properties, such as `client.games`, when
+you want model inference inside the callback.
+
+```ts
+const query = client
+  .multiQueryBuilder()
+  .query(client.games, "Recent Games", (games) =>
+    games.fields("id", "name").limit(5),
+  )
+  .count(client.platforms, "Platform Count");
+
+console.log(query.raw());
+
+const results = await client.multiQuery(query);
+```
+
+Raw strings are still supported for custom endpoints or APICalypse syntax that
+the builder does not cover:
+
+```ts
+await client.multiQuery(`
+query games "Top Games" {
+  fields name,rating;
+  sort rating desc;
+  limit 5;
+};
+`);
 ```

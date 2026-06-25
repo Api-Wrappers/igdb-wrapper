@@ -1,10 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { IGDBClient } from "../client/IGDBClient";
 import {
+	IGDB_ENDPOINT_METADATA,
 	IGDB_ENDPOINTS,
 	IGDB_SEARCHABLE_ENDPOINTS,
 } from "../endpoints/registry";
-import { IGDBRateLimitError } from "../errors";
+import {
+	IGDBAuthError,
+	IGDBNotFoundError,
+	IGDBRateLimitError,
+	IGDBValidationError,
+} from "../errors";
 import { buildImageUrl, createTagNumber } from "../index";
 
 const testConfig = {
@@ -101,6 +107,43 @@ describe("IGDBClient", () => {
 		expect(tokenRequests).toBe(1);
 	});
 
+	test("single-flights concurrent token refreshes", async () => {
+		let tokenRequests = 0;
+		const fetchMock = (async (input) => {
+			const url = String(input);
+
+			if (url.startsWith("https://id.twitch.tv/oauth2/token")) {
+				tokenRequests++;
+				await new Promise((resolve) => setTimeout(resolve, 10));
+				return Response.json({
+					access_token: "access-token",
+					expires_in: 3600,
+					token_type: "bearer",
+				});
+			}
+
+			if (url === "https://api.igdb.com/v4/games") {
+				return Response.json([{ id: 1, name: "Elden Ring" }]);
+			}
+
+			if (url === "https://api.igdb.com/v4/platforms") {
+				return Response.json([{ id: 48, name: "PlayStation 4" }]);
+			}
+
+			throw new Error(`Unexpected request: ${url}`);
+		}) as typeof fetch;
+
+		const client = new IGDBClient({ ...testConfig, fetch: fetchMock });
+
+		await Promise.all([
+			client.games.query().limit(1).execute(),
+			client.platforms.query().limit(1).execute(),
+		]);
+		await client.dispose();
+
+		expect(tokenRequests).toBe(1);
+	});
+
 	test("exposes documented IGDB endpoints through the generic endpoint wrapper", async () => {
 		const calls: Array<{ url: string; body: BodyInit | null | undefined }> = [];
 		const fetchMock = (async (input, init) => {
@@ -148,6 +191,13 @@ describe("IGDBClient", () => {
 			).toBe(path);
 		}
 
+		expect(Object.keys(IGDB_ENDPOINTS)).toEqual(
+			IGDB_ENDPOINT_METADATA.map((endpoint) => endpoint.key),
+		);
+		expect(Object.values(IGDB_ENDPOINTS)).toEqual(
+			IGDB_ENDPOINT_METADATA.map((endpoint) => endpoint.path),
+		);
+
 		for (const path of IGDB_SEARCHABLE_ENDPOINTS) {
 			expect(Object.values(IGDB_ENDPOINTS)).toContain(path);
 		}
@@ -179,6 +229,23 @@ describe("IGDBClient", () => {
 				'where name ~ *"Smash"* & platforms = [48,6] & version_parent = null;',
 			].join("\n"),
 		);
+
+		expect(
+			client.games
+				.query()
+				.fields("id", "name")
+				.limit(2)
+				.inspect(),
+		).toEqual({
+			ast: {
+				exclude: [],
+				fields: ["id", "name"],
+				limit: 2,
+				rawClauses: [],
+				where: [],
+			},
+			query: "fields id,name;\nlimit 2;",
+		});
 	});
 
 	test("sends multi-query bodies to the IGDB multiquery endpoint", async () => {
@@ -208,6 +275,55 @@ describe("IGDBClient", () => {
 		await expect(
 			client.multiQuery('query platforms/count "Count of Platforms" {\n};'),
 		).resolves.toEqual([{ name: "Count of Platforms", count: 155 }]);
+		await client.dispose();
+	});
+
+	test("builds typed multi-query bodies from query builders", async () => {
+		const fetchMock = (async (input, init) => {
+			const url = String(input);
+
+			if (url.startsWith("https://id.twitch.tv/oauth2/token")) {
+				return Response.json({
+					access_token: "access-token",
+					expires_in: 3600,
+					token_type: "bearer",
+				});
+			}
+
+			if (url === "https://api.igdb.com/v4/multiquery") {
+				expect(init?.body).toBe(
+					[
+						'query games "Recent Games" {',
+						"fields id,name;",
+						"limit 2;",
+						"};",
+						'query platforms/count "Platform Count" {',
+						"fields *;",
+						"};",
+					].join("\n"),
+				);
+				return Response.json([
+					{ name: "Recent Games", result: [{ id: 1, name: "Elden Ring" }] },
+					{ name: "Platform Count", count: 155 },
+				]);
+			}
+
+			throw new Error(`Unexpected request: ${url}`);
+		}) as typeof fetch;
+
+		const client = new IGDBClient({ ...testConfig, fetch: fetchMock });
+		const query = client
+			.multiQueryBuilder()
+			.query(client.games, "Recent Games", (games) =>
+				games.fields("id", "name").limit(2),
+			)
+			.count(client.platforms, "Platform Count");
+
+		expect(query.inspect().blocks).toHaveLength(2);
+		await expect(client.multiQuery(query)).resolves.toEqual([
+			{ name: "Recent Games", result: [{ id: 1, name: "Elden Ring" }] },
+			{ name: "Platform Count", count: 155 },
+		]);
 		await client.dispose();
 	});
 
@@ -390,5 +506,74 @@ describe("IGDBClient", () => {
 		} finally {
 			await client.dispose();
 		}
+	});
+
+	test("maps auth, validation, and not-found errors", async () => {
+		const fetchMock = (async (input) => {
+			const url = String(input);
+
+			if (url.startsWith("https://id.twitch.tv/oauth2/token")) {
+				return Response.json({
+					access_token: "access-token",
+					expires_in: 3600,
+					token_type: "bearer",
+				});
+			}
+
+			if (url === "https://api.igdb.com/v4/games") {
+				return Response.json({ message: "bad query" }, { status: 400 });
+			}
+
+			if (url === "https://api.igdb.com/v4/platforms") {
+				return Response.json({ message: "unauthorized" }, { status: 401 });
+			}
+
+			if (url === "https://api.igdb.com/v4/genres/404") {
+				return Response.json({ message: "missing" }, { status: 404 });
+			}
+
+			throw new Error(`Unexpected request: ${url}`);
+		}) as typeof fetch;
+
+		const client = new IGDBClient({ ...testConfig, fetch: fetchMock });
+
+		await expect(client.games.request("bad query")).rejects.toThrow(
+			IGDBValidationError,
+		);
+		await expect(client.platforms.request("fields id;")).rejects.toThrow(
+			IGDBAuthError,
+		);
+		await expect(client.endpoint("genres/404").request("fields id;")).rejects.toThrow(
+			IGDBNotFoundError,
+		);
+		await client.dispose();
+	});
+
+	test("throws not-found errors from first-result helpers", async () => {
+		const fetchMock = (async (input) => {
+			const url = String(input);
+
+			if (url.startsWith("https://id.twitch.tv/oauth2/token")) {
+				return Response.json({
+					access_token: "access-token",
+					expires_in: 3600,
+					token_type: "bearer",
+				});
+			}
+
+			if (url === "https://api.igdb.com/v4/games") {
+				return Response.json([]);
+			}
+
+			throw new Error(`Unexpected request: ${url}`);
+		}) as typeof fetch;
+
+		const client = new IGDBClient({ ...testConfig, fetch: fetchMock });
+
+		await expect(client.games.findById(1)).rejects.toThrow(IGDBNotFoundError);
+		await expect(client.games.firstOrThrow("fields id;")).rejects.toThrow(
+			IGDBNotFoundError,
+		);
+		await client.dispose();
 	});
 });

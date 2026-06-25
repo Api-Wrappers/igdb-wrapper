@@ -30,6 +30,7 @@
 		"build": "tsdown --config tsdown.config.mjs --config-loader native",
 		"test": "bun test",
 		"typecheck": "tsc --noEmit",
+		"package-smoke": "node scripts/package-smoke.cjs",
 		"check": "bun run typecheck && bun run test && bun run build",
 		"verify": "bun run check && npm pack --dry-run",
 		"changeset": "changeset",

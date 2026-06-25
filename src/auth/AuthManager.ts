@@ -28,6 +28,7 @@ export class AuthManager {
 	readonly #config: AuthConfig;
 	readonly #client: ReturnType<typeof createClient>;
 	#cache: TokenCache | null = null;
+	#refreshPromise: Promise<string> | null = null;
 
 	constructor(config: AuthConfig) {
 		this.#config = config;
@@ -47,7 +48,12 @@ export class AuthManager {
 		if (this.#cache && Date.now() < this.#cache.expiresAt - TOKEN_BUFFER_MS) {
 			return this.#cache.accessToken;
 		}
-		return this.#refresh();
+
+		this.#refreshPromise ??= this.#refresh().finally(() => {
+			this.#refreshPromise = null;
+		});
+
+		return this.#refreshPromise;
 	}
 
 	dispose(): Promise<void> {

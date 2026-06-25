@@ -16,6 +16,11 @@ import { whereHelpers } from "./helpers";
 export type ExecuteFn<T> = (query: string) => Promise<T[]>;
 export type CountFn = (query: string) => Promise<number>;
 
+export interface QueryDebugInfo {
+	ast: QueryAST;
+	query: string;
+}
+
 export class QueryBuilder<TModel, TShape = TModel> {
 	readonly #ast: QueryAST;
 	readonly #execute: ExecuteFn<TShape>;
@@ -125,8 +130,19 @@ export class QueryBuilder<TModel, TShape = TModel> {
 		return compileAST(this.#ast);
 	}
 
+	inspect(): QueryDebugInfo {
+		return {
+			ast: cloneAST(this.#ast),
+			query: this.raw(),
+		};
+	}
+
+	toJSON(): QueryDebugInfo {
+		return this.inspect();
+	}
+
 	debug(): this {
-		console.log("[igdb-wrapper] AST:", JSON.stringify(this.#ast, null, 2));
+		console.log("[igdb-wrapper] Query:", this.inspect());
 		return this;
 	}
 
@@ -195,6 +211,17 @@ export class QueryBuilder<TModel, TShape = TModel> {
 			currentOffset += pageSize;
 		}
 	}
+}
+
+function cloneAST(ast: QueryAST): QueryAST {
+	return {
+		...ast,
+		exclude: [...ast.exclude],
+		fields: [...ast.fields],
+		rawClauses: [...ast.rawClauses],
+		sort: ast.sort ? { ...ast.sort } : undefined,
+		where: ast.where.map((condition) => ({ ...condition })),
+	};
 }
 
 function normalizeFieldList(fields: string[]): string[] {

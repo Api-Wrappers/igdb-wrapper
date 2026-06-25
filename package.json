@@ -1,6 +1,6 @@
 {
 	"name": "@api-wrappers/igdb-wrapper",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"description": "Type-safe IGDB client with a fluent APICalypse query builder, endpoint helpers, auth, retries, and rate limiting",
 	"module": "./dist/index.mjs",
 	"type": "module",

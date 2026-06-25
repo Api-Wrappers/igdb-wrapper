@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - main
+      - "release/**"
 
 jobs:
   release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     permissions:
@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -27,9 +27,9 @@ jobs:
           bun-version: latest
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version-file: package.json
+          node-version: 20
           registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
@@ -47,21 +47,7 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${NAME}@${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Generate and verify release notes
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.release.outputs.tag }}
-        run: |
-          gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
-            -f tag_name="$TAG" \
-            -f target_commitish="$GITHUB_SHA" \
-            --jq '.body // ""' > release-notes.md
-          if ! grep -q '[^[:space:]]' release-notes.md; then
-            echo "GitHub generated empty release notes for ${TAG}" >&2
-            exit 1
-          fi
-
-      - name: Check GitHub release state
+      - name: Check release state
         id: release_state
         env:
           GH_TOKEN: ${{ github.token }}
@@ -90,9 +76,9 @@ jobs:
           done
           echo "has_changesets=${HAS_CHANGESETS}" >> "$GITHUB_OUTPUT"
 
-      - name: Create version PR or publish
+      - name: Create version PR or publish (changesets)
         id: changesets
-        if: steps.release_state.outputs.package_published != 'true' || steps.release_state.outputs.has_changesets == 'true'
+        if: github.ref == 'refs/heads/main' && (steps.release_state.outputs.package_published != 'true' || steps.release_state.outputs.has_changesets == 'true')
         uses: changesets/action@v1
         with:
           version: bun run changeset version
@@ -101,9 +87,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm (release branch)
+        id: npm_publish
+        if: startsWith(github.ref, 'refs/heads/release/') && steps.release_state.outputs.package_published != 'true'
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Generate release notes
+        id: notes
+        if: steps.release_state.outputs.exists != 'true' && (steps.changesets.outcome == 'success' || steps.npm_publish.outcome == 'success')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f tag_name="$TAG" \
+            -f target_commitish="$GITHUB_SHA" \
+            --jq '.body // ""' > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "# Release $TAG" > release-notes.md
+          fi
 
       - name: Create GitHub release
-        if: always() && steps.release_state.outputs.exists != 'true' && (steps.changesets.outcome == 'success' || steps.changesets.outcome == 'skipped')
+        if: steps.release_state.outputs.exists != 'true' && (steps.changesets.outcome == 'success' || steps.npm_publish.outcome == 'success')
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}

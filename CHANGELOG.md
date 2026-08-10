@@ -1,5 +1,13 @@
 # @api-wrappers/igdb-wrapper
 
+## 1.1.1
+
+### Patch Changes
+
+- 5d8f413: Align endpoint registration and model types with the current IGDB v4 schema, including the image types endpoint and recent company, image, popularity, region, and release-date fields.
+- 047ff0d: Reject typed multi-query builders that exceed IGDB's maximum of 10 query blocks per request.
+- 372e263: Reject the high-level search helper on endpoints that IGDB does not document as searchable, and narrow the exported searchable endpoint path type accordingly.
+
 ## 1.0.1
 
 ### Patch Changes

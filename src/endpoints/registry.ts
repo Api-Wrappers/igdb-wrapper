@@ -63,6 +63,7 @@ export const IGDB_ENDPOINT_METADATA = [
 	endpoint("gameVersionFeatureValues", "game_version_feature_values"),
 	endpoint("gameVideos", "game_videos"),
 	endpoint("genres", "genres"),
+	endpoint("imageTypes", "image_types"),
 	endpoint("involvedCompanies", "involved_companies"),
 	endpoint("keywords", "keywords"),
 	endpoint("languages", "languages"),

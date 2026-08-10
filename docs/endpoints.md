@@ -7,16 +7,16 @@ property on `IGDBClient`. Each property is an `IGDBEndpoint<T>` with:
 endpoint.query();              // QueryBuilder<T>
 endpoint.findMany();           // query().limit(50)
 endpoint.findById(id);         // first result where id = id
-endpoint.search("zelda");      // query().search("zelda").limit(50)
+endpoint.search("zelda");      // searchable IGDB endpoints only
 endpoint.request("fields *;"); // raw APICalypse body
 endpoint.count("where id > 0;");
 endpoint.meta();               // GET /{endpoint}/meta
 endpoint.requestProtobuf("fields id;");
 ```
 
-IGDB only supports `search` on selected endpoints. The wrapper exposes the
-method uniformly so new searchable endpoints do not require a wrapper release;
-the current documented searchable endpoints are exported as
+IGDB only supports `search` on selected endpoints. The high-level `search()`
+helper validates the endpoint and throws `IGDBValidationError` for unsupported
+paths. The current documented searchable endpoints are exported as
 `IGDB_SEARCHABLE_ENDPOINTS`.
 
 Endpoint properties and path exports are derived from
@@ -28,7 +28,7 @@ Use endpoint properties for known IGDB resources:
 ```ts
 await client.games.query().limit(10).execute();
 await client.platforms.findById(48);
-await client.companies.search("Nintendo").execute();
+await client.platforms.search("PlayStation").execute();
 ```
 
 Use `client.endpoint(path)` when IGDB adds a new endpoint before the wrapper publishes typed model support:

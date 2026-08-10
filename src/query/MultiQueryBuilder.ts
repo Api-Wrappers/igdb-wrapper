@@ -88,6 +88,12 @@ export class MultiQueryBuilder {
 		build: QueryFactory<TModel>,
 		count: boolean,
 	): MultiQueryBuilder {
+		if (this.#blocks.length >= 10) {
+			throw new IGDBValidationError(
+				"multi-query supports at most 10 queries per IGDB request",
+			);
+		}
+
 		const normalizedName = name.trim();
 		if (!normalizedName) {
 			throw new IGDBValidationError("multi-query name is required");

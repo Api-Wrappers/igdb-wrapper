@@ -95,6 +95,10 @@ export const IGDB_ENDPOINT_METADATA = [
 ] as const;
 
 type EndpointMetadataEntry = (typeof IGDB_ENDPOINT_METADATA)[number];
+type SearchableEndpointMetadataEntry = Extract<
+	EndpointMetadataEntry,
+	{ searchable: true }
+>;
 
 export const IGDB_ENDPOINTS = Object.fromEntries(
 	IGDB_ENDPOINT_METADATA.map(({ key, path }) => [key, path]),
@@ -104,10 +108,9 @@ export const IGDB_ENDPOINTS = Object.fromEntries(
 
 export type IGDBEndpointKey = keyof typeof IGDB_ENDPOINTS;
 export type IGDBEndpointPath = (typeof IGDB_ENDPOINTS)[IGDBEndpointKey];
+export type IGDBSearchableEndpointPath =
+	SearchableEndpointMetadataEntry["path"];
 
 export const IGDB_SEARCHABLE_ENDPOINTS = IGDB_ENDPOINT_METADATA.filter(
 	(endpoint) => endpoint.searchable === true,
-).map((endpoint) => endpoint.path) as readonly IGDBEndpointPath[];
-
-export type IGDBSearchableEndpointPath =
-	(typeof IGDB_SEARCHABLE_ENDPOINTS)[number];
+).map((endpoint) => endpoint.path) as readonly IGDBSearchableEndpointPath[];

@@ -1,14 +1,29 @@
-interface EndpointMetadata<TKey extends string, TPath extends string> {
+interface EndpointMetadata<
+	TKey extends string,
+	TPath extends string,
+	TSearchable extends boolean,
+> {
 	key: TKey;
 	path: TPath;
-	searchable?: boolean;
+	searchable: TSearchable;
 }
 
-const endpoint = <TKey extends string, TPath extends string>(
+function endpoint<TKey extends string, TPath extends string>(
 	key: TKey,
 	path: TPath,
-	options: { searchable?: boolean } = {},
-): EndpointMetadata<TKey, TPath> => ({ key, path, ...options });
+): EndpointMetadata<TKey, TPath, false>;
+function endpoint<TKey extends string, TPath extends string>(
+	key: TKey,
+	path: TPath,
+	options: { searchable: true },
+): EndpointMetadata<TKey, TPath, true>;
+function endpoint<TKey extends string, TPath extends string>(
+	key: TKey,
+	path: TPath,
+	options?: { searchable?: boolean },
+): EndpointMetadata<TKey, TPath, boolean> {
+	return { key, path, searchable: options?.searchable === true };
+}
 
 export const IGDB_ENDPOINT_METADATA = [
 	endpoint("ageRatings", "age_ratings"),

@@ -71,6 +71,7 @@ export interface IGDBEndpointModelMap {
 	gameVersionFeatureValues: Models.GameVersionFeatureValue;
 	gameVideos: Models.GameVideo;
 	genres: Models.Genre;
+	imageTypes: Models.ImageType;
 	involvedCompanies: Models.InvolvedCompany;
 	keywords: Models.Keyword;
 	languages: Models.Language;

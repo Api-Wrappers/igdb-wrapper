@@ -91,6 +91,7 @@ const rows = await experimental.request("fields *; limit 10;");
 | `gameVersionFeatureValues` | `game_version_feature_values` |
 | `gameVideos` | `game_videos` |
 | `genres` | `genres` |
+| `imageTypes` | `image_types` |
 | `involvedCompanies` | `involved_companies` |
 | `keywords` | `keywords` |
 | `languages` | `languages` |

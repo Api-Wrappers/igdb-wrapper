@@ -62,6 +62,7 @@ export interface AlternativeName extends IGDBEntity {
 export interface Artwork extends ImageEntity {
 	artwork_type?: ArtworkType;
 	game?: Game;
+	image_type?: ImageType;
 }
 
 export interface ArtworkType extends NamedEntity {}
@@ -127,6 +128,8 @@ export interface Company extends NamedEntity {
 	change_date_category?: number;
 	change_date_format?: DateFormat;
 	changed_company_id?: Company;
+	company_size?: CompanySize;
+	company_type_histories?: CompanyTypeHistory[];
 	country?: number;
 	description?: string;
 	developed?: Game[];
@@ -137,13 +140,12 @@ export interface Company extends NamedEntity {
 	start_date_category?: number;
 	start_date_format?: DateFormat;
 	status?: CompanyStatus;
-	type?: CompanyType;
 	websites?: CompanyWebsite[];
 }
 
 export interface CompanyLogo extends ImageEntity {}
 export interface CompanySize extends IGDBEntity {
-	size?: string;
+	name?: string;
 }
 export interface CompanyStatus extends IGDBEntity {
 	name?: string;
@@ -165,6 +167,8 @@ export interface CompanyWebsite extends IGDBEntity {
 
 export interface Cover extends ImageEntity {
 	game?: Game;
+	game_localization?: GameLocalization;
+	image_type?: ImageType;
 }
 
 export interface DateFormat extends IGDBEntity {
@@ -307,7 +311,7 @@ export interface GameStatus extends IGDBEntity {
 export interface GameTimeToBeat extends IGDBEntity {
 	completely?: number;
 	count?: number;
-	game_id?: Game;
+	game_id?: number;
 	hastily?: number;
 	normally?: number;
 }
@@ -347,6 +351,10 @@ export interface GameVideo extends IGDBEntity {
 export interface Genre extends NamedEntity {
 	name: string;
 	slug: string;
+}
+
+export interface ImageType extends IGDBEntity {
+	name?: string;
 }
 
 export interface InvolvedCompany extends IGDBEntity {
@@ -394,6 +402,7 @@ export interface MultiplayerMode extends IGDBEntity {
 }
 
 export interface NetworkType extends IGDBEntity {
+	event_networks?: EventNetwork[];
 	name?: string;
 }
 
@@ -448,7 +457,8 @@ export interface PlatformVersionReleaseDate extends IGDBEntity {
 	human?: string;
 	m?: number;
 	platform_version?: PlatformVersion;
-	region?: ReleaseDateRegion;
+	region?: number;
+	release_region?: ReleaseDateRegion;
 	y?: number;
 }
 
@@ -463,13 +473,15 @@ export interface PlayerPerspective extends NamedEntity {}
 
 export interface PopularityPrimitive extends IGDBEntity {
 	calculated_at?: number;
-	external_popularity_source?: number;
-	game_id?: Game;
-	popularity_source?: PopularityType;
+	external_popularity_source?: ExternalGameSource;
+	game_id?: number;
+	popularity_source?: number;
+	popularity_type?: PopularityType;
 	value?: number;
 }
 
 export interface PopularityType extends IGDBEntity {
+	external_popularity_source?: ExternalGameSource;
 	name?: string;
 	popularity_source?: number;
 }
@@ -477,17 +489,20 @@ export interface PopularityType extends IGDBEntity {
 export interface Region extends IGDBEntity {
 	category?: string;
 	identifier?: string;
+	name?: string;
 }
 
 export interface ReleaseDate extends IGDBEntity {
 	category?: number;
+	d?: number;
 	date?: number;
 	date_format?: DateFormat;
 	game?: Game;
 	human?: string;
 	m?: number;
 	platform?: Platform;
-	region?: ReleaseDateRegion;
+	region?: number;
+	release_region?: ReleaseDateRegion;
 	status?: ReleaseDateStatus;
 	y?: number;
 }

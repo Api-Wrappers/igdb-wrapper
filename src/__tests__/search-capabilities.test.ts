@@ -27,6 +27,6 @@ describe("endpoint search capabilities", () => {
 
 		// @ts-expect-error genres is not a searchable IGDB endpoint
 		const unsupported: IGDBSearchableEndpointPath = "genres";
-		expect(unsupported).toBe("genres");
+		void unsupported;
 	});
 });

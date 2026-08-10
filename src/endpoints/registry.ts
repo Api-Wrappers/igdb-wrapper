@@ -1,14 +1,29 @@
-interface EndpointMetadata<TKey extends string, TPath extends string> {
+interface EndpointMetadata<
+	TKey extends string,
+	TPath extends string,
+	TSearchable extends boolean,
+> {
 	key: TKey;
 	path: TPath;
-	searchable?: boolean;
+	searchable: TSearchable;
 }
 
-const endpoint = <TKey extends string, TPath extends string>(
+function endpoint<TKey extends string, TPath extends string>(
 	key: TKey,
 	path: TPath,
-	options: { searchable?: boolean } = {},
-): EndpointMetadata<TKey, TPath> => ({ key, path, ...options });
+): EndpointMetadata<TKey, TPath, false>;
+function endpoint<TKey extends string, TPath extends string>(
+	key: TKey,
+	path: TPath,
+	options: { searchable: true },
+): EndpointMetadata<TKey, TPath, true>;
+function endpoint<TKey extends string, TPath extends string>(
+	key: TKey,
+	path: TPath,
+	options?: { searchable?: boolean },
+): EndpointMetadata<TKey, TPath, boolean> {
+	return { key, path, searchable: options?.searchable === true };
+}
 
 export const IGDB_ENDPOINT_METADATA = [
 	endpoint("ageRatings", "age_ratings"),
@@ -95,6 +110,10 @@ export const IGDB_ENDPOINT_METADATA = [
 ] as const;
 
 type EndpointMetadataEntry = (typeof IGDB_ENDPOINT_METADATA)[number];
+type SearchableEndpointMetadataEntry = Extract<
+	EndpointMetadataEntry,
+	{ searchable: true }
+>;
 
 export const IGDB_ENDPOINTS = Object.fromEntries(
 	IGDB_ENDPOINT_METADATA.map(({ key, path }) => [key, path]),
@@ -104,10 +123,9 @@ export const IGDB_ENDPOINTS = Object.fromEntries(
 
 export type IGDBEndpointKey = keyof typeof IGDB_ENDPOINTS;
 export type IGDBEndpointPath = (typeof IGDB_ENDPOINTS)[IGDBEndpointKey];
+export type IGDBSearchableEndpointPath =
+	SearchableEndpointMetadataEntry["path"];
 
 export const IGDB_SEARCHABLE_ENDPOINTS = IGDB_ENDPOINT_METADATA.filter(
 	(endpoint) => endpoint.searchable === true,
-).map((endpoint) => endpoint.path) as readonly IGDBEndpointPath[];
-
-export type IGDBSearchableEndpointPath =
-	(typeof IGDB_SEARCHABLE_ENDPOINTS)[number];
+).map((endpoint) => endpoint.path) as readonly IGDBSearchableEndpointPath[];

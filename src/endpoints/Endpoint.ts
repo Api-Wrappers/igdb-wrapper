@@ -1,7 +1,10 @@
-import { IGDBNotFoundError } from "../errors";
+import { IGDBNotFoundError, IGDBValidationError } from "../errors";
 import type { HttpClient } from "../http/HttpClient";
 import { QueryBuilder } from "../query/QueryBuilder";
 import type { IGDBEntity, MetaField } from "../types/models";
+import { IGDB_SEARCHABLE_ENDPOINTS } from "./registry";
+
+const SEARCHABLE_ENDPOINTS = new Set<string>(IGDB_SEARCHABLE_ENDPOINTS);
 
 export class IGDBEndpoint<TModel extends IGDBEntity = IGDBEntity> {
 	readonly #http: HttpClient;
@@ -37,6 +40,11 @@ export class IGDBEndpoint<TModel extends IGDBEntity = IGDBEntity> {
 	}
 
 	search(term: string): QueryBuilder<TModel> {
+		if (!SEARCHABLE_ENDPOINTS.has(this.#path)) {
+			throw new IGDBValidationError(
+				`search is not supported on the IGDB /${this.#path} endpoint`,
+			);
+		}
 		return this.query().search(term).limit(50);
 	}
 

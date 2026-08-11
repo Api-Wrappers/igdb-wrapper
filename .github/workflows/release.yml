@@ -9,6 +9,7 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    environment: npm
 
     permissions:
       contents: write
@@ -17,20 +18,31 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup Node.js for npm trusted publishing
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Install supported npm for trusted publishing
+        run: npm install --global npm@11.18.0
+
+      - name: Verify npm trusted publishing requirements
+        run: |
+          node --version
+          npm --version
+          node -e "const [major, minor] = process.versions.node.split('.').map(Number); if (major < 22 || (major === 22 && minor < 14)) throw new Error('npm trusted publishing requires Node 22.14.0 or newer')"
+          npm --version | node -e "let v=''; process.stdin.on('data', d => v += d); process.stdin.on('end', () => { const [major, minor, patch] = v.trim().split('.').map(Number); if (major < 11 || (major === 11 && (minor < 5 || (minor === 5 && patch < 1)))) throw new Error('npm trusted publishing requires npm 11.5.1 or newer'); })"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -67,9 +79,10 @@ jobs:
             echo "package_published=false" >> "$GITHUB_OUTPUT"
           fi
 
+          shopt -s nullglob
           HAS_CHANGESETS=false
           for changeset in .changeset/*.md; do
-            if [ -e "$changeset" ]; then
+            if [[ "$(basename "$changeset")" != "README.md" ]]; then
               HAS_CHANGESETS=true
               break
             fi
@@ -77,7 +90,7 @@ jobs:
           echo "has_changesets=${HAS_CHANGESETS}" >> "$GITHUB_OUTPUT"
 
       - name: Create version PR (changesets)
-        if: steps.release_state.outputs.has_changesets == 'true'
+        if: github.ref == 'refs/heads/main' && steps.release_state.outputs.has_changesets == 'true'
         uses: changesets/action@v1
         with:
           version: bun run changeset version
@@ -87,7 +100,7 @@ jobs:
 
       - name: Publish to npm
         id: publish
-        if: steps.release_state.outputs.package_published != 'true' && steps.release_state.outputs.has_changesets != 'true'
+        if: github.ref == 'refs/heads/main' && steps.release_state.outputs.package_published != 'true' && steps.release_state.outputs.has_changesets != 'true'
         run: npm publish --access public --provenance
 
       - name: Generate release notes
